@@ -1,5 +1,4 @@
 {
-  "type": "module",
   "name": "cciod-backend",
   "version": "1.0.0",
   "description": "Proyecto backend para administrar clientes de CCIOD-Technologies",
