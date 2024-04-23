@@ -20,11 +20,12 @@ export const register = async (req: Request, res: Response): Promise<Response> =
     const token = generateToken({ id: userId, email });
     
     return res.status(201).json({
-      message: 'Task created successfully',
+      message: 'User created successfully',
       task: { name, email },
       token
     });
-  } catch (error) {
-    return res.status(500).json({ error: "Ha ocurrido un error en el servidor. Intente más tarde" });
+  } catch (error:any) {
+    if (error?.code === "23505") return res.status(400).json({ message: "El email ingresado ya existe en bd" });
+    return res.status(500).json({message: "Ha ocurrido un error en el servidor. Intente más tarde" });
   }
 }
