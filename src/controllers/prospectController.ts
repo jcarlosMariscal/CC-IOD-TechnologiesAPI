@@ -3,7 +3,7 @@ import { pool } from "../database/connection";
 
 export const getAllProspects = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const query = 'SELECT A.*, B.name as relationship_name, C.name as status_name FROM prospects A INNER JOIN relationships B ON A.relationship_id = B.relationship_id INNER JOIN status C ON A.status_id = C.status_id';
+    const query = 'SELECT A.*, B.name as relationship_name FROM prospects A INNER JOIN relationships B ON A.relationship_id = B.relationship_id';
     const result = await pool.query(query);
     if(!result.rowCount) return res.status(404).json({ message: "No se encontró ningún prospecto." });
     return res.status(201).json({
@@ -22,7 +22,7 @@ export const getProspectById = async (req: Request, res: Response): Promise<Resp
   try {
     const query = {
       name: 'get-prospect-id',
-      text: 'SELECT A.*, B.name as relationship_name, C.name as status_name FROM prospects A INNER JOIN relationships B ON A.relationship_id = B.relationship_id INNER JOIN status C ON A.status_id = C.status_id WHERE prospect_id = $1',
+      text: 'SELECT A.*, B.name as relationship_name FROM prospects A INNER JOIN relationships B ON A.relationship_id = B.relationship_id WHERE prospect_id = $1',
       values: [prospectId],
 }
     const result = await pool.query(query);
@@ -40,13 +40,13 @@ export const getProspectById = async (req: Request, res: Response): Promise<Resp
  }
 
 export const createProspect = async (req: Request, res: Response): Promise<Response> => {
-  const { name, email, phone, relationshipId, statusId, date, observations } = req.body;
+  const { name, email, phone, relationshipId, status, date, observations } = req.body;
   try {
     const optionalData = observations ? observations : "";
 
     const query = {
-      text: 'INSERT INTO prospects(name, email, phone, date, relationship_id, status_id, observations) VALUES($1, $2, $3, $4, $5, $6, $7)',
-      values: [name, email, phone, date, relationshipId, statusId, optionalData],
+      text: 'INSERT INTO prospects(name, email, phone, date, relationship_id, status, observations) VALUES($1, $2, $3, $4, $5, $6, $7)',
+      values: [name, email, phone, date, relationshipId, status, optionalData],
     }
     await pool.query(query);
     return res.status(201).json({
@@ -68,12 +68,12 @@ export const createProspect = async (req: Request, res: Response): Promise<Respo
 }
 export const updateProspect = async (req: Request, res: Response): Promise<Response> => { 
   const prospectId = parseInt(req.params.id);
-  const { name, email, phone, relationshipId, statusId, date, observations } = req.body;
+  const { name, email, phone, relationshipId, status, date, observations } = req.body;
   try {
     const optionalData = observations ? observations : "";
     const query = {
-      text: 'UPDATE prospects SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status_id=$6, observations=$7 WHERE prospect_id = $8',
-      values: [name, email, phone, date, relationshipId, statusId, optionalData, prospectId],
+      text: 'UPDATE prospects SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8',
+      values: [name, email, phone, date, relationshipId, status, optionalData, prospectId],
     }
     const result = await pool.query(query);
     if(!result.rowCount) return res.status(404).json({ message: "No se encontró ningún prospecto." });
