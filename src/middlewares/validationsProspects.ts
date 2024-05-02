@@ -21,9 +21,10 @@ const prospectSchema = Joi.object({
     "any.required": "Debe seleccionar un parentesco",
     "string.empty": "Debe seleccionar un parentesco",
   }),
-  statusId: Joi.number().required().messages({
-    "any.required": "",
-    "string.empty": "Debe seleccionar un estado",
+  status: Joi.string().valid('Pendiente', 'Aprobado').required().messages({
+    "any.required": "El estado es obligatorio",
+    'string.base': 'El estado debe ser un texto.',
+    'any.only': 'El estado debe ser "Pendiente" o "Aprobado".'
   }),
   date: Joi.date().required().messages({
     "any.required": "La fecha es obligatorio",
