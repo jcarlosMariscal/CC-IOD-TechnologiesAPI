@@ -6,7 +6,7 @@ export const getAllClients = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const query = "SELECT * FROM clients";
+    const query = "SELECT * FROM CLIENTS";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -34,7 +34,7 @@ export const getClientById = async (
   try {
     const query = {
       name: "get-client-id",
-      text: "SELECT * FROM clients WHERE client_id = $1",
+      text: "SELECT * FROM CLIENTS WHERE client_id = $1",
       values: [clientId],
     };
     const result = await pool.query(query);
@@ -61,40 +61,40 @@ export const createClient = async (
   res: Response
 ): Promise<Response> => {
   const {
-    contractNumber,
-    defendantName,
-    criminalCaseNumber,
-    investigationFileNumber,
-    judgeName,
-    courtName,
-    lawyerName,
-    signerName,
-    contactNumbers,
-    hearingDate,
+    contract_number,
+    defendant_name,
+    criminal_case_number,
+    investigation_file_number,
+    judge_name,
+    court_name,
+    lawyer_name,
+    signer_name,
+    contact_numbers,
+    hearing_date,
     observations,
     status,
-    prospectId,
+    prospect_id,
   } = req.body;
   try {
     const optionalData = observations ? observations : "";
-    const numbers = JSON.stringify(contactNumbers);
+    const numbers = JSON.stringify(contact_numbers);
 
     const query = {
-      text: "INSERT INTO clients(contractNumber, defendantName, criminalCaseNumber, investigationFileNumber, judgeName, courtName, lawyerName, signerName, contactNumbers, hearingDate, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+      text: "INSERT INTO CLIENTS(contract_number, defendant_name, criminal_case_number, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
       values: [
-        contractNumber,
-        defendantName,
-        criminalCaseNumber,
-        investigationFileNumber,
-        judgeName,
-        courtName,
-        lawyerName,
-        signerName,
+        contract_number,
+        defendant_name,
+        criminal_case_number,
+        investigation_file_number,
+        judge_name,
+        court_name,
+        lawyer_name,
+        signer_name,
         numbers,
-        hearingDate,
+        hearing_date,
         optionalData,
         status,
-        prospectId,
+        prospect_id,
       ],
     };
     await pool.query(query);
@@ -109,15 +109,15 @@ export const createClient = async (
         success: false,
         message: "Verifique que la fecha sea correcta",
       });
-    if (error?.code === "23505" && error.constraint.includes("contractnumber"))
+    if (error?.code === "23505" && error.constraint.includes("contract_number"))
       return res.status(400).json({
         success: false,
-        message: `Ya existe  el contrato #${contractNumber} registrado en base de datos`,
+        message: `Ya existe  el contrato #${contract_number} registrado en base de datos`,
       });
-    if (error?.code === "23505" && error.constraint.includes("defendantname"))
+    if (error?.code === "23505" && error.constraint.includes("defendant_name"))
       return res.status(400).json({
         success: false,
-        message: `Ya existe un imputado con el nombre de ${defendantName} registrado en base de datos`,
+        message: `Ya existe un imputado con el nombre de ${defendant_name} registrado en base de datos`,
       });
     if (error?.code === "23505" && error.constraint.includes("prospect_id"))
       return res.status(400).json({
@@ -127,7 +127,7 @@ export const createClient = async (
     if (error?.code === "23503" && error.constraint.includes("prospect_id"))
       return res.status(400).json({
         success: false,
-        message: `El prospecto con el id #${prospectId} no existe en base de datos, por lo que no es posible registrarlo como cliente.`,
+        message: `El prospecto con el id #${prospect_id} no existe en base de datos, por lo que no es posible registrarlo como cliente.`,
       });
     return res.status(500).json({
       success: false,
@@ -141,38 +141,39 @@ export const updateClient = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const clientId = parseInt(req.params.id);
+  const client_id = parseInt(req.params.id);
   const {
-    contractNumber,
-    defendantName,
-    criminalCaseNumber,
-    investigationFileNumber,
-    judgeName,
-    courtName,
-    lawyerName,
-    signerName,
-    contactNumbers,
-    hearingDate,
+    contract_number,
+    defendant_name,
+    criminal_case_number,
+    investigation_file_number,
+    judge_name,
+    court_name,
+    lawyer_name,
+    signer_name,
+    contact_numbers,
+    hearing_date,
     observations,
     status,
-    prospectId,
+    prospect_id,
   } = req.body;
   try {
     const optionalData = observations ? observations : "";
+    const numbers = JSON.stringify(contact_numbers);
     const query = {
-      text: "UPDATE clients SET criminalCaseNumber=$1, investigationFileNumber=$2, judgeName=$3, courtName=$4, lawyerName=$5, signerName=$6, contactNumbers=$7, hearingDate=$8, observations=$9, status=$10 WHERE client_id = $11",
+      text: "UPDATE CLIENTS SET criminal_case_number=$1, investigation_file_number=$2, judge_name=$3, court_name=$4, lawyer_name=$5, signer_name=$6, contact_numbers=$7, hearing_date=$8, observations=$9, status=$10 WHERE client_id = $11",
       values: [
-        criminalCaseNumber,
-        investigationFileNumber,
-        judgeName,
-        courtName,
-        lawyerName,
-        signerName,
-        contactNumbers,
-        hearingDate,
+        criminal_case_number,
+        investigation_file_number,
+        judge_name,
+        court_name,
+        lawyer_name,
+        signer_name,
+        numbers,
+        hearing_date,
         optionalData,
         status,
-        clientId,
+        client_id,
       ],
     };
     const result = await pool.query(query);
@@ -183,7 +184,7 @@ export const updateClient = async (
     return res.status(201).json({
       success: true,
       message: "El prospecto se ha modificado correctamente",
-      data: { defendantName },
+      data: { defendant_name },
     });
   } catch (error) {
     return res.status(500).json({
@@ -201,7 +202,7 @@ export const deleteClient = async (
   const clientId = parseInt(req.params.id);
   try {
     const query = {
-      text: "DELETE FROM clients WHERE client_id = $1",
+      text: "DELETE FROM CLIENTS WHERE client_id = $1",
       values: [clientId],
     };
     const result = await pool.query(query);
@@ -213,7 +214,13 @@ export const deleteClient = async (
       success: true,
       message: `El cliente ${clientId} ha sido eliminado`,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "23503" && error.constraint.includes("client_id"))
+      return res.status(400).json({
+        success: false,
+        message:
+          "No es posible eliminar a este cliente debido a que es un portador.",
+      });
     return res.status(500).json({
       success: false,
       message:

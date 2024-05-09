@@ -12,19 +12,22 @@ const prospectSchema = Joi.object({
     "string.empty": "El correo no puede estar vacío",
     "string.email": "El correo electrónico no es válido",
   }),
-  phone: Joi.string().regex(/^\d{10}$/).required().messages({
-    "any.required": "El teléfono es obligatorio",
-    "string.empty": "El teléfono no puede estar vacío",
-    "string.pattern.base": "El teléfono no es válido",
-  }),
-  relationshipId: Joi.number().required().messages({
+  phone: Joi.string()
+    .regex(/^\d{10}$/)
+    .required()
+    .messages({
+      "any.required": "El teléfono es obligatorio",
+      "string.empty": "El teléfono no puede estar vacío",
+      "string.pattern.base": "El teléfono no es válido",
+    }),
+  relationship_id: Joi.number().required().messages({
     "any.required": "Debe seleccionar un parentesco",
     "string.empty": "Debe seleccionar un parentesco",
   }),
-  status: Joi.string().valid('Pendiente', 'Aprobado').required().messages({
+  status: Joi.string().valid("Pendiente", "Aprobado").required().messages({
     "any.required": "El estado es obligatorio",
-    'string.base': 'El estado debe ser un texto.',
-    'any.only': 'El estado debe ser "Pendiente" o "Aprobado".'
+    "string.base": "El estado debe ser un texto.",
+    "any.only": 'El estado debe ser "Pendiente" o "Aprobado".',
   }),
   date: Joi.date().required().messages({
     "any.required": "La fecha es obligatorio",

@@ -7,7 +7,7 @@ export const getAllProspects = async (
 ): Promise<Response> => {
   try {
     const query =
-      "SELECT A.*, B.name as relationship_name FROM prospects A INNER JOIN relationships B ON A.relationship_id = B.relationship_id";
+      "SELECT A.*, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -32,12 +32,12 @@ export const getProspectById = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const prospectId = parseInt(req.params.id);
+  const prospect_id = parseInt(req.params.id);
   try {
     const query = {
       name: "get-prospect-id",
-      text: "SELECT A.*, B.name as relationship_name FROM prospects A INNER JOIN relationships B ON A.relationship_id = B.relationship_id WHERE prospect_id = $1",
-      values: [prospectId],
+      text: "SELECT A.*, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id WHERE prospect_id = $1",
+      values: [prospect_id],
     };
     const result = await pool.query(query);
     if (!result.rowCount)
@@ -63,14 +63,14 @@ export const createProspect = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { name, email, phone, relationshipId, status, date, observations } =
+  const { name, email, phone, relationship_id, status, date, observations } =
     req.body;
   try {
     const optionalData = observations ? observations : "";
 
     const query = {
-      text: "INSERT INTO prospects(name, email, phone, date, relationship_id, status, observations) VALUES($1, $2, $3, $4, $5, $6, $7)",
-      values: [name, email, phone, date, relationshipId, status, optionalData],
+      text: "INSERT INTO PROSPECTS(name, email, phone, date, relationship_id, status, observations) VALUES($1, $2, $3, $4, $5, $6, $7)",
+      values: [name, email, phone, date, relationship_id, status, optionalData],
     };
     await pool.query(query);
     return res.status(201).json({
@@ -84,7 +84,7 @@ export const createProspect = async (
         success: false,
         message: "Verifique que la fecha sea correcta",
       });
-    if (error?.code === "23503" && error.constraint.includes("relationshipid"))
+    if (error?.code === "23503" && error.constraint.includes("relationship_id"))
       return res.status(400).json({
         success: false,
         message:
@@ -108,22 +108,22 @@ export const updateProspect = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const prospectId = parseInt(req.params.id);
-  const { name, email, phone, relationshipId, status, date, observations } =
+  const prospect_id = parseInt(req.params.id);
+  const { name, email, phone, relationship_id, status, date, observations } =
     req.body;
   try {
     const optionalData = observations ? observations : "";
     const query = {
-      text: "UPDATE prospects SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8",
+      text: "UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8",
       values: [
         name,
         email,
         phone,
         date,
-        relationshipId,
+        relationship_id,
         status,
         optionalData,
-        prospectId,
+        prospect_id,
       ],
     };
     const result = await pool.query(query);
@@ -136,7 +136,13 @@ export const updateProspect = async (
       message: "El prospecto se ha modificado correctamente",
       data: { name, email },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "23503" && error.constraint.includes("relationship_id"))
+      return res.status(400).json({
+        success: false,
+        message:
+          "Parece que no existe el parentesco seleccionado. Seleccione una correcta",
+      });
     return res.status(500).json({
       success: false,
       message:
@@ -146,11 +152,11 @@ export const updateProspect = async (
   }
 };
 export const deleteProspect = async (req: Request, res: Response) => {
-  const prospectId = parseInt(req.params.id);
+  const prospect_id = parseInt(req.params.id);
   try {
     const query = {
-      text: "DELETE FROM prospects WHERE prospect_id = $1",
-      values: [prospectId],
+      text: "DELETE FROM PROSPECTS WHERE prospect_id = $1",
+      values: [prospect_id],
     };
     const result = await pool.query(query);
     if (!result.rowCount)
@@ -159,9 +165,15 @@ export const deleteProspect = async (req: Request, res: Response) => {
         .json({ message: "El prospecto que desea eliminar no se encuentra." });
     return res.status(201).json({
       success: true,
-      message: `El prospecto ${prospectId} ha sido eliminado`,
+      message: `El prospecto ${prospect_id} ha sido eliminado`,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "23503" && error.constraint.includes("prospect_id"))
+      return res.status(400).json({
+        success: false,
+        message:
+          "No es posible eliminar a este prospecto debido a que es un cliente.",
+      });
     return res.status(500).json({
       success: false,
       message:

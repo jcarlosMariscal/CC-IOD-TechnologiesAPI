@@ -5,7 +5,7 @@ import { generateToken } from "../services/auth.service";
 import { IUser } from "../models/user.interface";
 
 const validateUser = async (): Promise<boolean> => {
-  const query = "SELECT 1 FROM users WHERE role_id = 1 LIMIT 1";
+  const query = "SELECT 1 FROM USERS WHERE role_id = 1 LIMIT 1";
   try {
     const res = await pool.query(query);
     return (res.rowCount ?? 0) > 0;
@@ -27,7 +27,7 @@ export const register = async (
     const role = 1;
     const hashedPassword = await hashPassword(password);
     const query = {
-      text: "INSERT INTO users(name, email,password, role_id) VALUES($1, $2, $3, $4) RETURNING user_id",
+      text: "INSERT INTO USERS(name, email,password, role_id) VALUES($1, $2, $3, $4) RETURNING user_id",
       values: [name, email, hashedPassword, role],
     };
     const result = await pool.query(query);
@@ -54,7 +54,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
     const query = {
       name: "login-user",
-      text: "SELECT user_id, name, email, password, role_id FROM users WHERE email = $1",
+      text: "SELECT user_id, name, email, password, role_id FROM USERS WHERE email = $1",
       values: [email],
     };
     const result = await pool.query(query);
