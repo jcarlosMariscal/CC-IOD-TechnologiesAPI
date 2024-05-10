@@ -63,6 +63,7 @@ const prospectSchema = Joi.object({
       "string.pattern.base":
         "Cada número telefónico debe contener solo dígitos numéricos.",
       "any.required": "Los contactos son obligatorios",
+      "string.base": "El números de contacto deben estar como cadena de texto",
     }),
   hearing_date: Joi.date()
     .format(["YYYY-MM-DD", "YYYY/MM/DD"])
@@ -86,10 +87,12 @@ const prospectSchema = Joi.object({
       "any.only":
         'El estado debe ser "Pendiente de aprobación", "Pendiente de audiencia", "Pendiente de colocación" o "Colocado".',
     }),
-  observations: Joi.string().optional(),
-  prospect_id: Joi.number().required().messages({
+  observations: Joi.string().optional().messages(),
+  prospect_id: Joi.number().integer().required().messages({
     "any.required": "Debe haber un prospecto a la cuál definir como cliente.",
-    "string.empty": "El id del prospecto es necesario.",
+    "number.empty": "El id del prospecto es necesario.",
+    "number.base": "El id del prospecto debe ser un número",
+    "number.integer": "El id del prospecto debe ser un número entero",
   }),
 });
 export const validationsClient = (

@@ -60,7 +60,7 @@ const prospectSchema = Joi.object({
     .messages({
       "array.base": "Los correos deben estar en un arreglo.",
       "array.min": "Ingrese al menos un correo electrónico",
-      // "string.empty": "El correo no puede estar vacío",
+      "string.base": "El correo debe ser una cadena de texto",
       "string.email": "El correo electrónico no es válido",
       "any.required": "Los correos para información son obligatorios",
     }),
@@ -75,13 +75,17 @@ const prospectSchema = Joi.object({
     "string.base": "El nombre del instalador debe ser una cadena",
   }),
   observations: Joi.string().optional(),
-  client_id: Joi.number().required().messages({
+  client_id: Joi.number().integer().required().messages({
     "any.required": "Debe haber un cliente a la cuál definir como portador.",
-    "string.empty": "El id del cliente es necesario.",
+    "number.empty": "El id del cliente es necesario.",
+    "number.base": "El id del cliente debe ser un número",
+    "number.integer": "El id del cliente debe ser un número entero",
   }),
-  relationship_id: Joi.number().required().messages({
+  relationship_id: Joi.number().integer().required().messages({
     "any.required": "Debe seleccionar un parentesco",
-    "string.empty": "Debe seleccionar un parentesco",
+    "number.empty": "Debe seleccionar un parentesco",
+    "number.base": "El id de la relación debe ser un número",
+    "number.integer": "El id del parentesco debe ser un número entero",
   }),
 });
 export const validationsCarrier = (

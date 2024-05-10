@@ -22,9 +22,11 @@ const prospectSchema = Joi.object({
       "string.empty": "El teléfono no puede estar vacío",
       "string.pattern.base": "El teléfono no es válido",
     }),
-  relationship_id: Joi.number().required().messages({
+  relationship_id: Joi.number().integer().required().messages({
     "any.required": "Debe seleccionar un parentesco",
-    "string.empty": "Debe seleccionar un parentesco",
+    "number.empty": "Debe seleccionar un parentesco",
+    "number.base": "El id de la relación debe ser un número",
+    "number.integer": "El id del parentesco debe ser un número entero",
   }),
   status: Joi.string().valid("Pendiente", "Aprobado").required().messages({
     "any.required": "El estado es obligatorio",
@@ -36,7 +38,7 @@ const prospectSchema = Joi.object({
     "date.base": "La fecha debe ser una fecha válida.",
     "date.format": "El formato de la fecha debe ser YYYY-MM-DD.",
   }),
-  observations: Joi.string().optional(),
+  observations: Joi.string().optional().messages(),
 });
 export const validationsProspect = (
   req: Request,

@@ -30,12 +30,12 @@ export const getClientById = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const clientId = parseInt(req.params.id);
+  const client_id = parseInt(req.params.id);
   try {
     const query = {
       name: "get-client-id",
       text: "SELECT * FROM CLIENTS WHERE client_id = $1",
-      values: [clientId],
+      values: [client_id],
     };
     const result = await pool.query(query);
     if (!result.rowCount)
