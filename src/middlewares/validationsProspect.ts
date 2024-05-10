@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import Joi from "joi";
+import JoiBase from "joi";
+import JoiDate from "@joi/date";
 
+const Joi = JoiBase.extend(JoiDate);
 // Middleware para validaciones
 const prospectSchema = Joi.object({
   name: Joi.string().required().messages({
@@ -29,13 +31,14 @@ const prospectSchema = Joi.object({
     "string.base": "El estado debe ser un texto.",
     "any.only": 'El estado debe ser "Pendiente" o "Aprobado".',
   }),
-  date: Joi.date().required().messages({
+  date: Joi.date().format(["YYYY-MM-DD", "YYYY/MM/DD"]).required().messages({
     "any.required": "La fecha es obligatorio",
-    "string.empty": "La fecha no puede estar vacío",
+    "date.base": "La fecha debe ser una fecha válida.",
+    "date.format": "El formato de la fecha debe ser YYYY-MM-DD.",
   }),
   observations: Joi.string().optional(),
 });
-export const validateProspect = (
+export const validationsProspect = (
   req: Request,
   res: Response,
   next: NextFunction

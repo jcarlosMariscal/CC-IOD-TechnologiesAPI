@@ -1,5 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import Joi from "joi";
+import JoiBase from "joi";
+import JoiDate from "@joi/date";
+
+const Joi = JoiBase.extend(JoiDate);
 
 // Middleware para validaciones
 const prospectSchema = Joi.object({
@@ -61,10 +64,14 @@ const prospectSchema = Joi.object({
         "Cada número telefónico debe contener solo dígitos numéricos.",
       "any.required": "Los contactos son obligatorios",
     }),
-  hearing_date: Joi.date().required().messages({
-    "any.required": "La fecha de audiencia es obligatoria",
-    "string.empty": "La fecha de audiencia no puede estar vacío",
-  }),
+  hearing_date: Joi.date()
+    .format(["YYYY-MM-DD", "YYYY/MM/DD"])
+    .required()
+    .messages({
+      "any.required": "La fecha de audiencia es obligatorio",
+      "date.base": "La fecha de audiencia debe ser una fecha válida.",
+      "date.format": "El formato de la fecha debe ser YYYY-MM-DD.",
+    }),
   status: Joi.string()
     .valid(
       "Pendiente de aprobación",
@@ -85,7 +92,7 @@ const prospectSchema = Joi.object({
     "string.empty": "El id del prospecto es necesario.",
   }),
 });
-export const validateClient = (
+export const validationsClient = (
   req: Request,
   res: Response,
   next: NextFunction
