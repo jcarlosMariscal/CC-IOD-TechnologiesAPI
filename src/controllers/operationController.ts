@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { pool } from "../database/connection";
 import { removeFile } from "../helpers/removeFile";
 import { generateFilename } from "../helpers/generateFilename";
+import multer from "multer";
 
 export const getAllOperations = async (
   req: Request,
@@ -59,7 +60,7 @@ export const getOperationById = async (
 };
 
 export const createOperation = async (req: Request, res: Response) => {
-  const { carrier_id } = req.body;
+  const carrier_id = parseInt(req.params.id);
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const contract = files.contract
@@ -76,28 +77,8 @@ export const createOperation = async (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       message: "La operación se ha creado correctamente",
-      data: req.body,
-      files: req.files,
     });
   } catch (error: any) {
-    if (
-      error?.code === "22P02" ||
-      (error?.code === "23503" && error?.constraint.includes("carrier_id"))
-    )
-      return res.status(400).json({
-        success: false,
-        message: `El id del portador no es correcta. Verifique que esta exista en la base de datos para realizar esta acción.`,
-      });
-    if (error?.code === "23505" && error?.constraint.includes("carrier_id"))
-      return res.status(400).json({
-        success: false,
-        message: `Al parecer este portador ya tiene una operación creada.`,
-      });
-    if (error?.code === "23502" && error?.column === "carrier_id")
-      return res.status(400).json({
-        success: false,
-        message: `Es necesario indicar un portador para la agregar una operación.`,
-      });
     return res.json({
       message:
         "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
@@ -121,7 +102,6 @@ export const updateOperation = async (req: Request, res: Response) => {
       "SELECT contract, installation_report FROM OPERATIONS WHERE operation_id = $1",
       [operation_id]
     );
-
     if (files.contract && operation.rows[0].contract) {
       const remove = removeFile(operation.rows[0].contract);
       if (!remove) {
@@ -155,10 +135,9 @@ export const updateOperation = async (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       message: "La operación se ha modificado correctamente",
-      files: req.files,
     });
   } catch (error: any) {
-    return res.json({
+    return res.status(500).json({
       message:
         "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
       error,
