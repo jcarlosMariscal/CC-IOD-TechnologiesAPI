@@ -81,7 +81,7 @@ export const createCarrier = async (
     const emails = JSON.stringify(information_emails);
 
     const query = {
-      text: "INSERT INTO CARRIERS(residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, observations, client_id, relationship_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+      text: "INSERT INTO CARRIERS(residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, observations, client_id, relationship_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING carrier_id",
       values: [
         residence_area,
         placement_date,
@@ -97,10 +97,18 @@ export const createCarrier = async (
         relationship_id,
       ],
     };
-    await pool.query(query);
+    const result = await pool.query(query);
+    if (result.rowCount) {
+      const carrier_id = result.rows[0].carrier_id;
+      const query = {
+        text: "INSERT INTO OPERATIONS(carrier_id) VALUES($1)",
+        values: [carrier_id],
+      };
+      await pool.query(query);
+    }
     return res.status(201).json({
       success: true,
-      message: "El portador se ha creado correctamente",
+      message: "El prospecto se ha creado correctamente",
       data: req.body,
     });
   } catch (error: any) {
@@ -212,16 +220,6 @@ export const updateCarrier = async (
         message:
           "Parece que no existe el parentesco seleccionado. Seleccione una correcta",
       });
-    // if (error?.code === "23505" && error.constraint.includes("client_id"))
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: `Al parecer el cliente que intenta agregar ya ha sido registrado como cliente.`,
-    //   });
-    // if (error?.code === "23503" && error.constraint.includes("client_id"))
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: `El cliente con el id #${client_id} no existe en base de datos, por lo que no es posible registrarlo como portador.`,
-    //   });
     return res.status(500).json({
       success: false,
       message:

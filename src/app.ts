@@ -6,6 +6,7 @@ import clientsRoutes from "./routes/clientsRoutes";
 import carriersRoutes from "./routes/carriersRoutes";
 import operationsRoutes from "./routes/operationsRoutes";
 import cors from "cors";
+import path from "path";
 
 const app = express();
 
@@ -15,6 +16,9 @@ app.use(cors());
 // app.use(cors({
 //   origin: 'https://cciod.mx/'
 // }));
+
+const uploadsPath = path.resolve(__dirname, "../uploads");
+app.use("/uploads", express.static(uploadsPath));
 
 // ------- Routes -----------
 app.use("/auth", authRoutes);

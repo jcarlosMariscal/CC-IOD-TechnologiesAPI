@@ -1,7 +1,6 @@
 import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken";
 import {
-  createOperation,
   deleteOperation,
   getAllOperations,
   getOperationById,
@@ -15,13 +14,6 @@ const router = express.Router();
 
 router.use(authenticateToken);
 router.get("/", getAllOperations);
-router.post(
-  "/:id",
-  validateUserExistence,
-  uploadFiles,
-  createOperation,
-  validationFiles
-);
 router.get("/:id", getOperationById);
 router.put(
   "/:id",
