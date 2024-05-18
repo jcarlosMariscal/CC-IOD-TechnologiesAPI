@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken";
 import {
-  deleteOperation,
+  deleteFile,
   getAllOperations,
   getOperationById,
   updateOperation,
@@ -22,6 +22,7 @@ router.put(
   updateOperation,
   validationFiles
 );
-router.delete("/:id", deleteOperation);
+
+router.put("/delete-file/:id", deleteFile);
 
 export default router;

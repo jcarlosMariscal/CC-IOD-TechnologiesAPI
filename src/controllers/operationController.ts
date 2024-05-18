@@ -37,7 +37,7 @@ export const getOperationById = async (
   try {
     const query = {
       name: "get-prospect-id",
-      text: "SELECT operation_id, contract, installation_report, carrier_id FROM OPERATIONS WHERE operation_id = $1",
+      text: "SELECT operation_id as id, contract, installation_report, carrier_id FROM OPERATIONS WHERE operation_id = $1",
       values: [operation_id],
     };
     const result = await pool.query(query);
@@ -116,31 +116,54 @@ export const updateOperation = async (req: Request, res: Response) => {
     });
   }
 };
-
-export const deleteOperation = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
+export const deleteFile = async (req: Request, res: Response) => {
   const operation_id = parseInt(req.params.id);
+  const { file } = req.body;
   try {
+    const operation = await pool.query(
+      "SELECT contract, installation_report FROM OPERATIONS WHERE operation_id = $1",
+      [operation_id]
+    );
+    const contractBD = operation.rows[0].contract;
+    const reportBD = operation.rows[0].installation_report;
+    if (file === "contract" && contractBD) {
+      const remove = removeFile(contractBD);
+      if (!remove) {
+        return res.status(400).json({
+          success: false,
+          message: "Ha ocurrido un error al intentar eliminar el contrato.",
+        });
+      }
+    }
+    if (file === "installation_report" && reportBD) {
+      const remove = removeFile(reportBD);
+      if (!remove) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
+        });
+      }
+    }
+
+    const contract = file === "contract" ? null : contractBD;
+    const installation_report =
+      file === "installation_report" ? null : reportBD;
+
     const query = {
-      text: "DELETE FROM OPERATIONS WHERE operation_id = $1",
-      values: [operation_id],
+      text: "UPDATE OPERATIONS SET contract = $1, installation_report = $2 WHERE operation_id = $3",
+      values: [contract, installation_report, operation_id],
     };
-    const result = await pool.query(query);
-    if (!result.rowCount)
-      return res
-        .status(404)
-        .json({ message: "La operación que desea eliminar no se encuentra." });
+    await pool.query(query);
     return res.status(201).json({
       success: true,
-      message: `La operación ${operation_id} ha sido eliminado`,
+      message: "La operación se ha modificado correctamente",
     });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
       message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
+        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde.sdsd",
       error,
     });
   }
