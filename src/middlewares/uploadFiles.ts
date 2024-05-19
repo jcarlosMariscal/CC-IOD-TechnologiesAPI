@@ -1,18 +1,24 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now();
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(
-      file.originalname,
-      path.extname(file.originalname)
-    );
-    cb(null, basename + "-cciod" + "-" + uniqueSuffix + ext);
+    const originalName = file.originalname;
+
+    if (fs.existsSync(path.join("uploads", originalName))) {
+      return cb(
+        new Error(
+          `Archivo "${originalName}" repetido. No es posible subir dos archivos con el mismo nombre al servidor.`
+        ),
+        ""
+      );
+    } else {
+      cb(null, originalName);
+    }
   },
 });
 

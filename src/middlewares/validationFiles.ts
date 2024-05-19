@@ -19,12 +19,19 @@ export const validationFiles = (
       message,
     });
   } else if (err) {
-    res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      err,
-    });
+    if (err.message.includes("mismo nombre")) {
+      res.status(409).json({
+        success: false,
+        message: err.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message:
+          "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
+        err,
+      });
+    }
   } else {
     next();
   }

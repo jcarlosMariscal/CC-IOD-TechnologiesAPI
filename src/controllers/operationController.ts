@@ -2,14 +2,14 @@ import { Request, Response } from "express";
 import { pool } from "../database/connection";
 import { removeFile } from "../helpers/removeFile";
 import { generateFilename } from "../helpers/generateFilename";
-import multer from "multer";
 
 export const getAllOperations = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const query = "SELECT * FROM OPERATIONS";
+    const query =
+      "SELECT operation_id as id, C.defendant_name as name, contract, installation_report FROM OPERATIONS A INNER JOIN CARRIERS B ON A.carrier_id = B.carrier_id INNER JOIN CLIENTS C ON B.client_id = C.client_id ORDER BY operation_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -18,6 +18,7 @@ export const getAllOperations = async (
     return res.status(201).json({
       success: true,
       message: "Información de todas las operaciones",
+      data: result.rows,
     });
   } catch (error) {
     return res.status(500).json({
@@ -36,7 +37,7 @@ export const getOperationById = async (
   try {
     const query = {
       name: "get-prospect-id",
-      text: "SELECT operation_id, contract, installation_report, carrier_id FROM OPERATIONS WHERE operation_id = $1",
+      text: "SELECT operation_id as id, contract, installation_report, carrier_id FROM OPERATIONS WHERE operation_id = $1",
       values: [operation_id],
     };
     const result = await pool.query(query);
@@ -59,35 +60,6 @@ export const getOperationById = async (
   }
 };
 
-export const createOperation = async (req: Request, res: Response) => {
-  const carrier_id = parseInt(req.params.id);
-  try {
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    const contract = files.contract
-      ? generateFilename(req, files.contract[0].filename)
-      : null;
-    const report = files.installation_report
-      ? generateFilename(req, files.installation_report[0].filename)
-      : null;
-    const query = {
-      text: "INSERT INTO OPERATIONS(contract, installation_report, carrier_id) VALUES($1, $2, $3)",
-      values: [contract, report, carrier_id],
-    };
-    await pool.query(query);
-    return res.status(201).json({
-      success: true,
-      message: "La operación se ha creado correctamente",
-    });
-  } catch (error: any) {
-    return res.json({
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
-  }
-};
-
-// const queries = () => {}
 export const updateOperation = async (req: Request, res: Response) => {
   const operation_id = parseInt(req.params.id);
   try {
@@ -139,36 +111,59 @@ export const updateOperation = async (req: Request, res: Response) => {
   } catch (error: any) {
     return res.status(500).json({
       message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
+        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde.sdsd",
       error,
     });
   }
 };
-
-export const deleteOperation = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
+export const deleteFile = async (req: Request, res: Response) => {
   const operation_id = parseInt(req.params.id);
+  const { file } = req.body;
   try {
+    const operation = await pool.query(
+      "SELECT contract, installation_report FROM OPERATIONS WHERE operation_id = $1",
+      [operation_id]
+    );
+    const contractBD = operation.rows[0].contract;
+    const reportBD = operation.rows[0].installation_report;
+    if (file === "contract" && contractBD) {
+      const remove = removeFile(contractBD);
+      if (!remove) {
+        return res.status(400).json({
+          success: false,
+          message: "Ha ocurrido un error al intentar eliminar el contrato.",
+        });
+      }
+    }
+    if (file === "installation_report" && reportBD) {
+      const remove = removeFile(reportBD);
+      if (!remove) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
+        });
+      }
+    }
+
+    const contract = file === "contract" ? null : contractBD;
+    const installation_report =
+      file === "installation_report" ? null : reportBD;
+
     const query = {
-      text: "DELETE FROM OPERATIONS WHERE operation_id = $1",
-      values: [operation_id],
+      text: "UPDATE OPERATIONS SET contract = $1, installation_report = $2 WHERE operation_id = $3",
+      values: [contract, installation_report, operation_id],
     };
-    const result = await pool.query(query);
-    if (!result.rowCount)
-      return res
-        .status(404)
-        .json({ message: "La operación que desea eliminar no se encuentra." });
+    await pool.query(query);
     return res.status(201).json({
       success: true,
-      message: `La operación ${operation_id} ha sido eliminado`,
+      message: "La operación se ha modificado correctamente",
     });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
       message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
+        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde.sdsd",
       error,
     });
   }
