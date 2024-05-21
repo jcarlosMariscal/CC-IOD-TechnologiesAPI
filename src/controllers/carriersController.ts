@@ -6,7 +6,8 @@ export const getAllCarriers = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const query = "SELECT * FROM CARRIERS";
+    const query =
+      "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -35,7 +36,7 @@ export const getCarrierById = async (
   try {
     const query = {
       name: "get-client-id",
-      text: "SELECT * FROM CARRIERS WHERE carrier_id = $1",
+      text: "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id WHERE carrier_id = $1",
       values: [carrier_id],
     };
     const result = await pool.query(query);
@@ -80,6 +81,21 @@ export const createCarrier = async (
     const optionalData = observations ? observations : "";
     const emails = JSON.stringify(information_emails);
 
+    const client = await pool.query(
+      "SELECT status FROM CLIENTS WHERE client_id = $1",
+      [client_id]
+    );
+
+    if (
+      client.rows[0].status !== "Pendiente de colocación" ||
+      client.rows[0].status !== "Colocado"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Para agregar un portador este debe estar como cliente en estado "Pendiente de colocación" o "Colocado"',
+      });
+    }
     const query = {
       text: "INSERT INTO CARRIERS(residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, observations, client_id, relationship_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING carrier_id",
       values: [

@@ -7,7 +7,7 @@ export const getAllProspects = async (
 ): Promise<Response> => {
   try {
     const query =
-      "SELECT A.*, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id";
+      "SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -36,7 +36,7 @@ export const getProspectById = async (
   try {
     const query = {
       name: "get-prospect-id",
-      text: "SELECT A.*, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id WHERE prospect_id = $1",
+      text: "SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id WHERE prospect_id = $1",
       values: [prospect_id],
     };
     const result = await pool.query(query);
@@ -174,6 +174,35 @@ export const deleteProspect = async (req: Request, res: Response) => {
         message:
           "No es posible eliminar a este prospecto debido a que es un cliente.",
       });
+    return res.status(500).json({
+      success: false,
+      message:
+        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
+      error,
+    });
+  }
+};
+
+export const getApprovedProspectsWithoutClient = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const query = {
+      // name: "get-prospect-id",
+      text: "SELECT prospect_id as id, name FROM PROSPECTS WHERE status = 'Aprobado' AND prospect_id NOT IN (SELECT prospect_id FROM CLIENTS)",
+    };
+    const result = await pool.query(query);
+    if (!result.rowCount)
+      return res.status(404).json({
+        message: "No se encontró ningún prospecto que pueda ser cliente",
+      });
+    return res.status(201).json({
+      success: true,
+      message: "Datos del prospecto aprobados",
+      data: result.rows,
+    });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message:
