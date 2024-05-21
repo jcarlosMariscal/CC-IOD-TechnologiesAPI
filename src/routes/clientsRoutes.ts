@@ -4,6 +4,7 @@ import {
   createClient,
   deleteClient,
   getAllClients,
+  getApprovedClientsWithoutCarrier,
   getClientById,
   updateClient,
 } from "../controllers/clientController";
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.use(authenticateToken);
 router.get("/", getAllClients);
+router.get("/approved-without-carrier/", getApprovedClientsWithoutCarrier);
 router.post("/", validationsClient, createClient);
 router.get("/:id", getClientById);
 router.put("/:id", validationsClient, updateClient);

@@ -87,7 +87,7 @@ const prospectSchema = Joi.object({
       "any.only":
         'El estado debe ser "Pendiente de aprobación", "Pendiente de audiencia", "Pendiente de colocación" o "Colocado".',
     }),
-  observations: Joi.string().optional().messages(),
+  observations: Joi.string().allow("").optional().messages(),
   prospect_id: Joi.number().integer().required().messages({
     "any.required": "Debe haber un prospecto a la cuál definir como cliente.",
     "number.empty": "El id del prospecto es necesario.",
