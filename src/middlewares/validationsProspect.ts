@@ -38,7 +38,7 @@ const prospectSchema = Joi.object({
     "date.base": "La fecha debe ser una fecha válida.",
     "date.format": "El formato de la fecha debe ser YYYY-MM-DD.",
   }),
-  observations: Joi.string().optional().messages(),
+  observations: Joi.string().allow("").optional().messages(),
 });
 export const validationsProspect = (
   req: Request,

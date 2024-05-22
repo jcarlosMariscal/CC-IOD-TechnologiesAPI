@@ -74,7 +74,7 @@ const prospectSchema = Joi.object({
     "string.empty": "El nombre del instalador no puede estar vacío",
     "string.base": "El nombre del instalador debe ser una cadena",
   }),
-  observations: Joi.string().optional(),
+  observations: Joi.string().allow("").optional(),
   client_id: Joi.number().integer().required().messages({
     "any.required": "Debe haber un cliente a la cuál definir como portador.",
     "number.empty": "El id del cliente es necesario.",
