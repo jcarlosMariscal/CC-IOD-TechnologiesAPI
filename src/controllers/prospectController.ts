@@ -7,7 +7,7 @@ export const getAllProspects = async (
 ): Promise<Response> => {
   try {
     const query =
-      "SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id";
+      "SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id ORDER BY prospect_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res

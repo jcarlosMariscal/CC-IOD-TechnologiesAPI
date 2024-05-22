@@ -248,7 +248,7 @@ export const getApprovedClientsWithoutCarrier = async (
 ) => {
   try {
     const query = {
-      text: "SELECT client_id as id, defendant_name as name FROM CLIENTS WHERE status = 'Pendiente de colocación' OR status = 'Colocado' AND client_id NOT IN (SELECT client_id FROM CARRIERS)",
+      text: "SELECT client_id as id, defendant_name as name FROM CLIENTS WHERE (status = 'Pendiente de colocación' OR status = 'Colocado')  AND client_id NOT IN (SELECT client_id FROM CARRIERS)",
     };
     const result = await pool.query(query);
     if (!result.rowCount)

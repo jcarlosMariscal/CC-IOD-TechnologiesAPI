@@ -7,7 +7,7 @@ export const getAllCarriers = async (
 ): Promise<Response> => {
   try {
     const query =
-      "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id";
+      "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id ORDER BY carrier_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
