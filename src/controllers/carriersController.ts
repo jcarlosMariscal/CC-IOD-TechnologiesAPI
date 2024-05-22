@@ -87,8 +87,8 @@ export const createCarrier = async (
     );
 
     if (
-      client.rows[0].status !== "Pendiente de colocación" ||
-      client.rows[0].status !== "Colocado"
+      client.rows[0].status === "Pendiente de aprobación" ||
+      client.rows[0].status === "Pendiente de audiencia"
     ) {
       return res.status(400).json({
         success: false,
