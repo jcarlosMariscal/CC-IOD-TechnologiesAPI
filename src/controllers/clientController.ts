@@ -81,7 +81,7 @@ export const createClient = async (
     const numbers = JSON.stringify(contact_numbers);
 
     const prospect = await pool.query(
-      "SELECT status FROM PROSPECTS WHERE operation_id = $1",
+      "SELECT status FROM PROSPECTS WHERE prospect_id = $1",
       [prospect_id]
     );
 
