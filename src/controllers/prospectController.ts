@@ -112,6 +112,11 @@ export const updateProspect = async (
   const { name, email, phone, relationship_id, status, date, observations } =
     req.body;
   try {
+    const prospect = await pool.query(
+      "SELECT prospect_id FROM CLIENTS WHERE prospect_id = $1",
+      [prospect_id]
+    );
+    const newStatus = prospect.rowCount ? "Aprobado" : status;
     const optionalData = observations ? observations : "";
     const query = {
       text: "UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8",
@@ -121,7 +126,7 @@ export const updateProspect = async (
         phone,
         date,
         relationship_id,
-        status,
+        newStatus,
         optionalData,
         prospect_id,
       ],
