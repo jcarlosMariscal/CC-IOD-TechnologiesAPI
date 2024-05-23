@@ -5,6 +5,7 @@ import prospectsRoutes from "./routes/prospectsRoutes";
 import clientsRoutes from "./routes/clientsRoutes";
 import carriersRoutes from "./routes/carriersRoutes";
 import operationsRoutes from "./routes/operationsRoutes";
+import usersRoutes from "./routes/usersRoutes";
 import cors from "cors";
 import path from "path";
 
@@ -26,5 +27,6 @@ app.use("/prospects", prospectsRoutes);
 app.use("/clients", clientsRoutes);
 app.use("/carriers", carriersRoutes);
 app.use("/operations", operationsRoutes);
+app.use("/users", usersRoutes);
 
 export default app;

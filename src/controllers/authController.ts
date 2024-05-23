@@ -30,14 +30,11 @@ export const register = async (
       text: "INSERT INTO USERS(name, email,password, role_id) VALUES($1, $2, $3, $4) RETURNING user_id",
       values: [name, email, hashedPassword, role],
     };
-    const result = await pool.query(query);
-    const user_id = result.rows[0].user_id;
-    const token = generateToken({ id: user_id, email });
+    await pool.query(query);
 
     return res.status(201).json({
       success: true,
       data: { name, email },
-      token,
       message: "El administrador se ha registrado correctamente",
     });
   } catch (error: any) {

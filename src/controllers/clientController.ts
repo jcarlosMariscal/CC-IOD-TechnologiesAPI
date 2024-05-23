@@ -170,6 +170,15 @@ export const updateClient = async (
     prospect_id,
   } = req.body;
   try {
+    const client = await pool.query(
+      "SELECT client_id FROM CARRIERS WHERE client_id = $1",
+      [client_id]
+    );
+    const newStatus = client.rowCount
+      ? status === "Pendiente de colocación" || status === "Colocado"
+        ? status
+        : "Pendiente de colocación"
+      : status;
     const optionalData = observations ? observations : "";
     const numbers = JSON.stringify(contact_numbers);
     const query = {
@@ -184,7 +193,7 @@ export const updateClient = async (
         numbers,
         hearing_date,
         optionalData,
-        status,
+        newStatus,
         client_id,
       ],
     };
