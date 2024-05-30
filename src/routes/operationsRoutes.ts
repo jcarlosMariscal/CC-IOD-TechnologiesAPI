@@ -9,6 +9,7 @@ import {
 import { validationFiles } from "../middlewares/validationFiles";
 import { uploadFiles } from "../middlewares/uploadFiles";
 import { validateUserExistence } from "../middlewares/validateUserExistence";
+import { errorMiddleware } from "../middlewares/errorMiddleware";
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ router.put(
 );
 
 router.put("/delete-file/:id", deleteFile);
+router.use(errorMiddleware);
 
 export default router;

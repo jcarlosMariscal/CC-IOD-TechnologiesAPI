@@ -1,11 +1,12 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
 import { hashPassword } from "../services/password.service";
 
 export const getAllUsers = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   try {
     const query =
       "SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id ORDER BY user_id";
@@ -20,19 +21,15 @@ export const getAllUsers = async (
       data: result.rows,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const getUserById = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const user_id = parseInt(req.params.id);
   try {
     const query = {
@@ -51,22 +48,25 @@ export const getUserById = async (
       data: result.rows[0],
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const createUser = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
-  const { name, email, password } = req.body;
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  const { name, email, password, role_id } = req.body;
   try {
-    const role_id = 2; // Administrativo
+    if (!role_id)
+      return res.status(404).json({
+        message: "Para crear el usuario defina su rol.",
+      });
+    if (role_id !== 2 || role_id !== 3)
+      return res.status(404).json({
+        message: "Seleccione el rol de Director o Administrativo.",
+      });
     const hashedPassword = await hashPassword(password);
     const query = {
       text: "INSERT INTO USERS(name, email, password, role_id) VALUES($1, $2, $3, $4)",
@@ -79,25 +79,15 @@ export const createUser = async (
       data: { name, email },
     });
   } catch (error: any) {
-    if (error.code === "23505" && error.constraint.includes("email")) {
-      return res.status(400).json({
-        success: false,
-        message: "Ya existe un usuario con este correo registrado.",
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const updateUser = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const user_id = parseInt(req.params.id);
   const { name, email, password } = req.body;
   try {
@@ -117,21 +107,14 @@ export const updateUser = async (
       data: { name, email },
     });
   } catch (error: any) {
-    if (error.code === "23505" && error.constraint.includes("email")) {
-      return res.status(400).json({
-        success: false,
-        message: "Ya existe un usuario con este correo registrado.",
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const user_id = parseInt(req.params.id);
   try {
     const role_admin = 1;
@@ -150,11 +133,6 @@ export const deleteUser = async (req: Request, res: Response) => {
       message: `El usuario ${user_id} ha sido eliminado`,
     });
   } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };

@@ -9,6 +9,7 @@ import {
 } from "../controllers/prospectController";
 import { authenticateToken } from "../middlewares/authenticateToken";
 import { validationsProspect } from "../middlewares/validationsProspect";
+import { errorMiddleware } from "../middlewares/errorMiddleware";
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.post("/", validationsProspect, createProspect);
 router.get("/:id", getProspectById);
 router.put("/:id", validationsProspect, updateProspect);
 router.delete("/:id", deleteProspect);
+router.use(errorMiddleware);
 
 export default router;

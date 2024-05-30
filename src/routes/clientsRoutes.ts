@@ -9,6 +9,7 @@ import {
   updateClient,
 } from "../controllers/clientController";
 import { validationsClient } from "../middlewares/validationsClient";
+import { errorMiddleware } from "../middlewares/errorMiddleware";
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.post("/", validationsClient, createClient);
 router.get("/:id", getClientById);
 router.put("/:id", validationsClient, updateClient);
 router.delete("/:id", deleteClient);
+router.use(errorMiddleware);
 
 export default router;

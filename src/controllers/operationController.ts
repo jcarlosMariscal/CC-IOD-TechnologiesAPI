@@ -1,12 +1,13 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
 import { removeFile } from "../helpers/removeFile";
 import { generateFilename } from "../helpers/generateFilename";
 
 export const getAllOperations = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   try {
     const query =
       "SELECT operation_id as id, C.defendant_name as name, contract, installation_report FROM OPERATIONS A INNER JOIN CARRIERS B ON A.carrier_id = B.carrier_id INNER JOIN CLIENTS C ON B.client_id = C.client_id ORDER BY operation_id";
@@ -21,18 +22,14 @@ export const getAllOperations = async (
       data: result.rows,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 export const getOperationById = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const operation_id = parseInt(req.params.id);
   try {
     const query = {
@@ -51,16 +48,15 @@ export const getOperationById = async (
       data: result.rows[0],
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
-export const updateOperation = async (req: Request, res: Response) => {
+export const updateOperation = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const operation_id = parseInt(req.params.id);
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -109,14 +105,14 @@ export const updateOperation = async (req: Request, res: Response) => {
       message: "La operación se ha modificado correctamente",
     });
   } catch (error: any) {
-    return res.status(500).json({
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde.sdsd",
-      error,
-    });
+    next(error);
   }
 };
-export const deleteFile = async (req: Request, res: Response) => {
+export const deleteFile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const operation_id = parseInt(req.params.id);
   const { file } = req.body;
   try {
@@ -160,11 +156,6 @@ export const deleteFile = async (req: Request, res: Response) => {
       message: "La operación se ha modificado correctamente",
     });
   } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde.sdsd",
-      error,
-    });
+    next(error);
   }
 };
