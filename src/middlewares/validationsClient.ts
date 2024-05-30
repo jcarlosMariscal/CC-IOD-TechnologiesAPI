@@ -17,20 +17,22 @@ const prospectSchema = Joi.object({
     "string.empty": "El nombre del imputado no puede estar vacío",
     "string.base": "El nombre del imputado debe ser una cadena.",
   }),
-  criminal_case_number: Joi.number().integer().required().messages({
-    "any.required": "El número de causa penal es obligatorio",
-    "number.empty": "El número de causa penal no puede estar vacío",
-    "number.base": "El número de causa penal debe ser númerico",
-    "number.integer": "El número de causa penal debe ser un número entero.",
+  criminal_case: Joi.string().required().messages({
+    "any.required": "La causa penal es obligatorio",
+    "string.empty": "La causa penal no puede estar vacío",
+    "string.base": "La causa penal debe ser una cadena.",
   }),
-  investigation_file_number: Joi.number().integer().required().messages({
-    "any.required": "El número de carpeta de investigación es obligatorio",
-    "number.empty":
-      "El número de carpeta de investigación no puede estar vacío",
-    "number.base": "El número de carpeta de investigación debe ser númerico",
-    "number.integer":
-      "El número de carpeta de investigación debe ser un número entero.",
-  }),
+  investigation_file_number: Joi.number()
+    .integer()
+    .allow(null)
+    .optional()
+    .messages({
+      "number.empty":
+        "El número de carpeta de investigación no puede estar vacío",
+      "number.base": "El número de carpeta de investigación debe ser númerico",
+      "number.integer":
+        "El número de carpeta de investigación debe ser un número entero.",
+    }),
   judge_name: Joi.string().required().messages({
     "any.required": "El nombre del Juez es obligatorio",
     "string.empty": "El nombre del Juez no puede estar vacío",

@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
 
 export const getAllCarriers = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   try {
     const query =
       "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id ORDER BY carrier_id";
@@ -13,25 +14,21 @@ export const getAllCarriers = async (
       return res
         .status(404)
         .json({ message: "No se encontró ningún portador." });
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
       message: "Información de todos los portadores",
       data: result.rows,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const getCarrierById = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const carrier_id = parseInt(req.params.id);
   try {
     const query = {
@@ -50,19 +47,15 @@ export const getCarrierById = async (
       data: result.rows[0],
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const createCarrier = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const {
     residence_area,
     placement_date,
@@ -78,17 +71,17 @@ export const createCarrier = async (
     relationship_id,
   } = req.body;
   try {
-    const optionalData = observations ? observations : "";
+    const obserOptional = observations ? observations : "";
     const emails = JSON.stringify(information_emails);
 
     const client = await pool.query(
       "SELECT status FROM CLIENTS WHERE client_id = $1",
       [client_id]
     );
-
+    const cStatus = client.rows[0].status;
     if (
-      client.rows[0].status === "Pendiente de aprobación" ||
-      client.rows[0].status === "Pendiente de audiencia"
+      cStatus === "Pendiente de aprobación" ||
+      cStatus === "Pendiente de audiencia"
     ) {
       return res.status(400).json({
         success: false,
@@ -108,7 +101,7 @@ export const createCarrier = async (
         emails,
         house_arrest,
         installer_name,
-        optionalData,
+        obserOptional,
         client_id,
         relationship_id,
       ],
@@ -128,60 +121,14 @@ export const createCarrier = async (
       data: req.body,
     });
   } catch (error: any) {
-    if (error?.code === "22007")
-      return res.status(400).json({
-        success: false,
-        message: "Verifique que la fecha sea correcta",
-      });
-    if (
-      error?.code === "23505" &&
-      error.constraint.includes("electronic_bracelet")
-    )
-      return res.status(400).json({
-        success: false,
-        message: `El brazalete ${electronic_bracelet} ya está registrado a otro portador.`,
-      });
-    if (error?.code === "23505" && error.constraint.includes("beacon"))
-      return res.status(400).json({
-        success: false,
-        message: `El BEACON ${beacon} ya está registrado a otro portador.`,
-      });
-    if (
-      error?.code === "23505" &&
-      error.constraint.includes("wireless_charger")
-    )
-      return res.status(400).json({
-        success: false,
-        message: `El cargador inalámbrico ${wireless_charger} ya está registrado a otro portador`,
-      });
-    if (error?.code === "23503" && error.constraint.includes("relationship_id"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "Parece que no existe el parentesco seleccionado. Seleccione una correcta",
-      });
-    if (error?.code === "23505" && error.constraint.includes("client_id"))
-      return res.status(400).json({
-        success: false,
-        message: `Al parecer el cliente que intenta agregar ya ha sido registrado como cliente.`,
-      });
-    if (error?.code === "23503" && error.constraint.includes("client_id"))
-      return res.status(400).json({
-        success: false,
-        message: `El cliente con el id #${client_id} no existe en base de datos, por lo que no es posible registrarlo como portador.`,
-      });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 export const updateCarrier = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const carrier_id = parseInt(req.params.id);
   const {
     residence_area,
@@ -198,7 +145,7 @@ export const updateCarrier = async (
     relationship_id,
   } = req.body;
   try {
-    const optionalData = observations ? observations : "";
+    const obserOptional = observations ? observations : "";
     const emails = JSON.stringify(information_emails);
 
     const query = {
@@ -210,7 +157,7 @@ export const updateCarrier = async (
         emails,
         house_arrest,
         installer_name,
-        optionalData,
+        obserOptional,
         relationship_id,
         carrier_id,
       ],
@@ -225,30 +172,15 @@ export const updateCarrier = async (
       message: "El portador se ha modificado correctamente",
     });
   } catch (error: any) {
-    if (error?.code === "22007")
-      return res.status(400).json({
-        success: false,
-        message: "Verifique que la fecha sea correcta",
-      });
-    if (error?.code === "23503" && error.constraint.includes("relationship_id"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "Parece que no existe el parentesco seleccionado. Seleccione una correcta",
-      });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const deleteCarrier = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const carrier_id = parseInt(req.params.id);
   try {
     const query = {
@@ -265,17 +197,7 @@ export const deleteCarrier = async (
       message: `El portador ${carrier_id} ha sido eliminado`,
     });
   } catch (error: any) {
-    if (error?.code === "23503" && error.constraint.includes("carrier_id"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "No es posible eliminar a este portador debido a que es un cliente.",
-      });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
+// 203

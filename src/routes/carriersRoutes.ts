@@ -8,6 +8,7 @@ import {
   updateCarrier,
 } from "../controllers/carriersController";
 import { validationsCarrier } from "../middlewares/validationsCarrier";
+import { errorMiddleware } from "../middlewares/errorMiddleware";
 
 const router = express.Router();
 
@@ -17,5 +18,6 @@ router.get("/:id", getCarrierById);
 router.post("/", validationsCarrier, createCarrier);
 router.put("/:id", validationsCarrier, updateCarrier);
 router.delete("/:id", deleteCarrier);
+router.use(errorMiddleware);
 
 export default router;

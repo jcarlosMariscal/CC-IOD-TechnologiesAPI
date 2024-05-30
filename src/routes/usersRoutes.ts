@@ -8,6 +8,7 @@ import {
   updateUser,
 } from "../controllers/usersController";
 import { validationsRegister } from "../middlewares/validationsAuth";
+import { errorMiddleware } from "../middlewares/errorMiddleware";
 
 const router = express.Router();
 
@@ -17,5 +18,6 @@ router.post("/", validationsRegister, createUser);
 router.get("/:id", getUserById);
 router.put("/:id", validationsRegister, updateUser);
 router.delete("/:id", deleteUser);
+router.use(errorMiddleware);
 
 export default router;

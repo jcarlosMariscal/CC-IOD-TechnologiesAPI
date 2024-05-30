@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
 
 export const getAllProspects = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   try {
     const query =
       "SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id ORDER BY prospect_id";
@@ -19,19 +20,15 @@ export const getAllProspects = async (
       data: result.rows,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const getProspectById = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const prospect_id = parseInt(req.params.id);
   try {
     const query = {
@@ -50,19 +47,15 @@ export const getProspectById = async (
       data: result.rows[0],
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const createProspect = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const { name, email, phone, relationship_id, status, date, observations } =
     req.body;
   try {
@@ -79,35 +72,14 @@ export const createProspect = async (
       data: { name, email },
     });
   } catch (error: any) {
-    if (error?.code === "22007")
-      return res.status(400).json({
-        success: false,
-        message: "Verifique que la fecha sea correcta",
-      });
-    if (error?.code === "23503" && error.constraint.includes("relationship_id"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "Parece que no existe el parentesco seleccionado. Seleccione una correcta",
-      });
-    if (error?.code === "23503" && error.constraint.includes("status"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "Parece que no existe el estado seleccionado. Seleccione una correcta",
-      });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 export const updateProspect = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const prospect_id = parseInt(req.params.id);
   const { name, email, phone, relationship_id, status, date, observations } =
     req.body;
@@ -142,21 +114,14 @@ export const updateProspect = async (
       data: { name, email },
     });
   } catch (error: any) {
-    if (error?.code === "23503" && error.constraint.includes("relationship_id"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "Parece que no existe el parentesco seleccionado. Seleccione una correcta",
-      });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
-export const deleteProspect = async (req: Request, res: Response) => {
+export const deleteProspect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const prospect_id = parseInt(req.params.id);
   try {
     const query = {
@@ -173,25 +138,15 @@ export const deleteProspect = async (req: Request, res: Response) => {
       message: `El prospecto ${prospect_id} ha sido eliminado`,
     });
   } catch (error: any) {
-    if (error?.code === "23503" && error.constraint.includes("prospect_id"))
-      return res.status(400).json({
-        success: false,
-        message:
-          "No es posible eliminar a este prospecto debido a que es un cliente.",
-      });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
 
 export const getApprovedProspectsWithoutClient = async (
   req: Request,
-  res: Response
-) => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   try {
     const query = {
       // name: "get-prospect-id",
@@ -208,11 +163,7 @@ export const getApprovedProspectsWithoutClient = async (
       data: result.rows,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-      error,
-    });
+    next(error);
   }
 };
+// 226

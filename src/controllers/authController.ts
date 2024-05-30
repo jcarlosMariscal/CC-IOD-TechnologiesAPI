@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { comparePasswords, hashPassword } from "../services/password.service";
 import { pool } from "../database/connection";
 import { generateToken } from "../services/auth.service";
@@ -17,8 +17,9 @@ const validateUser = async (): Promise<boolean> => {
 
 export const register = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const { name, email, password }: IUser = req.body;
   try {
     const isAdmin = await validateUser();
@@ -38,15 +39,15 @@ export const register = async (
       message: "El administrador se ha registrado correctamente",
     });
   } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message:
-        "Ha ocurrido un error en el servidor. Intente de nuevo más tarde",
-    });
+    next(error);
   }
 };
 
-export const login = async (req: Request, res: Response): Promise<Response> => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const { email, password }: IUser = req.body;
   try {
     const query = {
@@ -82,9 +83,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       message: "El usuario ha iniciado sesión",
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Ha ocurrido un error en el servidor. Intente más tarde",
-    });
+    next(error);
   }
 };
+// 91

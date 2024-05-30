@@ -4,23 +4,12 @@ import JoiDate from "@joi/date";
 
 const Joi = JoiBase.extend(JoiDate);
 
-// Middleware para validaciones
 const prospectSchema = Joi.object({
-  // residence_area: Joi.number().integer().required().messages({
-  //   "any.required": "El número de contrato es obligatorio",
-  //   "number.empty": "El número de contrato no puede estar vacío",
-  //   "number.base": "El número de contrato debe ser un número",
-  //   "number.integer": "El número de contrato debe ser un número entero.",
-  // }),
   residence_area: Joi.string().required().messages({
     "any.required": "La Zona de residencia del cliente es obligatorio",
     "string.empty": "La Zona de residencia del cliente no puede estar vacío",
     "string.base": "La Zona de residencia del cliente debe ser una cadena.",
   }),
-  // hearing_date: Joi.date().required().messages({
-  //   "any.required": "La fecha de audiencia es obligatoria",
-  //   "string.empty": "La fecha de audiencia no puede estar vacío",
-  // }),
   placement_date: Joi.date()
     .format(["YYYY-MM-DD", "YYYY/MM/DD"])
     .required()

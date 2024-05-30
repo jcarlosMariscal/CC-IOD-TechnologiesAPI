@@ -23,6 +23,11 @@ const registerSchema = Joi.object({
     "any.required": "El nombre es obligatorio",
     "string.empty": "El nombre no puede estar vacío",
   }),
+  role_id: Joi.number().valid(2, 3).integer().optional().messages({
+    "number.base": "El rol debe ser un número.",
+    "any.only": "El rol debe ser Director o Administrativo",
+    "number.integer": "El rol debe ser un número entero.",
+  }),
   ...commonValidationRules,
 });
 const loginSchema = Joi.object({ ...commonValidationRules });
