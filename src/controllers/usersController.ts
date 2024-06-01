@@ -9,7 +9,7 @@ export const getAllUsers = async (
 ): Promise<Response | void> => {
   try {
     const query =
-      "SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id ORDER BY user_id";
+      "SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id WHERE user_id != 1 ORDER BY user_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -34,7 +34,7 @@ export const getUserById = async (
   try {
     const query = {
       name: "get-prospect-id",
-      text: "SELECT user_id as id, A.name, email, password, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id WHERE user_id = $1",
+      text: "SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id WHERE user_id = $1",
       values: [user_id],
     };
     const result = await pool.query(query);
@@ -63,9 +63,10 @@ export const createUser = async (
       return res.status(404).json({
         message: "Para crear el usuario defina su rol.",
       });
-    if (role_id !== 2 || role_id !== 3)
+    if (parseInt(role_id) !== 2 && parseInt(role_id) !== 3)
       return res.status(404).json({
         message: "Seleccione el rol de Director o Administrativo.",
+        role_id,
       });
     const hashedPassword = await hashPassword(password);
     const query = {
@@ -89,12 +90,12 @@ export const updateUser = async (
   next: NextFunction
 ): Promise<Response | void> => {
   const user_id = parseInt(req.params.id);
-  const { name, email, password } = req.body;
+  const { name, email, role_id } = req.body;
   try {
-    const hashedPassword = await hashPassword(password);
+    // const hashedPassword = await hashPassword(password);
     const query = {
-      text: "UPDATE USERS SET name=$1, email=$2, password=$3 WHERE user_id = $4",
-      values: [name, email, hashedPassword, user_id],
+      text: "UPDATE USERS SET name=$1, email=$2, role_id=$3 WHERE user_id = $4",
+      values: [name, email, role_id, user_id],
     };
     const result = await pool.query(query);
     if (!result.rowCount)
@@ -105,6 +106,60 @@ export const updateUser = async (
       success: true,
       message: "El usuario se ha modificado correctamente",
       data: { name, email },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+export const updateAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  const admin_id = parseInt(req.params.id);
+  const { name, email, role_id } = req.body;
+  try {
+    const id = admin_id === 1 ? admin_id : 1;
+    const query = {
+      text: "UPDATE USERS SET name=$1, email=$2 WHERE user_id = $3",
+      values: [name, email, id],
+    };
+    const result = await pool.query(query);
+    if (!result.rowCount)
+      return res
+        .status(404)
+        .json({ message: "No se encontró ningún administrador." });
+    return res.status(201).json({
+      success: true,
+      message: "El administrador se ha modificado correctamente",
+      data: { name, email },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  const user_id = parseInt(req.params.id);
+  const { password } = req.body;
+
+  try {
+    const hashedPassword = await hashPassword(password);
+    const query = {
+      text: "UPDATE USERS SET password=$1 WHERE user_id = $2",
+      values: [hashedPassword, user_id],
+    };
+    const result = await pool.query(query);
+    if (!result.rowCount)
+      return res
+        .status(404)
+        .json({ message: "No se encontró ningún usuario." });
+    return res.status(201).json({
+      success: true,
+      message: "La contraseña se ha modificado.",
     });
   } catch (error: any) {
     next(error);

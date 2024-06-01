@@ -1,12 +1,28 @@
 import { NextFunction, Request, Response } from "express";
 import Joi from "joi";
+const nameValidation = {
+  name: Joi.string().required().messages({
+    "any.required": "El nombre es obligatorio",
+    "string.empty": "El nombre no puede estar vacío",
+  }),
+};
 
-const commonValidationRules = {
+const roleIdValidation = {
+  role_id: Joi.number().valid(2, 3).integer().optional().messages({
+    "number.base": "El rol debe ser un número.",
+    "any.only": "El rol debe ser Director o Administrativo",
+    "number.integer": "El rol debe ser un número entero.",
+  }),
+};
+
+const emailValidation = {
   email: Joi.string().email().required().messages({
     "any.required": "El correo es obligatorio",
     "string.empty": "El correo no puede estar vacío",
     "string.email": "El correo electrónico no es válido",
   }),
+};
+const passwordValidation = {
   password: Joi.string()
     .regex(/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\W)(?!.* ).{8,}$/)
     .required()
@@ -19,18 +35,22 @@ const commonValidationRules = {
 };
 
 const registerSchema = Joi.object({
-  name: Joi.string().required().messages({
-    "any.required": "El nombre es obligatorio",
-    "string.empty": "El nombre no puede estar vacío",
-  }),
-  role_id: Joi.number().valid(2, 3).integer().optional().messages({
-    "number.base": "El rol debe ser un número.",
-    "any.only": "El rol debe ser Director o Administrativo",
-    "number.integer": "El rol debe ser un número entero.",
-  }),
-  ...commonValidationRules,
+  ...nameValidation,
+  ...roleIdValidation,
+  ...emailValidation,
+  ...passwordValidation,
 });
-const loginSchema = Joi.object({ ...commonValidationRules });
+const updateUserSchema = Joi.object({
+  ...nameValidation,
+  ...roleIdValidation,
+  ...emailValidation,
+});
+const updateAdminSchema = Joi.object({
+  ...nameValidation,
+  ...emailValidation,
+});
+const loginSchema = Joi.object({ ...emailValidation, ...passwordValidation });
+const changePassSchema = Joi.object({ ...passwordValidation });
 
 export const validationsRegister = (
   req: Request,
@@ -38,6 +58,33 @@ export const validationsRegister = (
   next: NextFunction
 ) => {
   const { error } = registerSchema.validate(req.body);
+  if (error) return res.status(400).json({ error: error.details[0].message });
+  next();
+};
+export const validationsUpdate = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { error } = updateUserSchema.validate(req.body);
+  if (error) return res.status(400).json({ error: error.details[0].message });
+  next();
+};
+export const validationsUpdateAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { error } = updateAdminSchema.validate(req.body);
+  if (error) return res.status(400).json({ error: error.details[0].message });
+  next();
+};
+export const validationChangePass = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { error } = changePassSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
   next();
 };

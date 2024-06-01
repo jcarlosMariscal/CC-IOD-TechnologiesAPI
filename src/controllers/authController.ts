@@ -71,13 +71,19 @@ export const login = async (
     //   // maxAge: 3600000, // 1 hour
     //   maxAge: 60,
     // });
+    const role =
+      user.role_id === 1
+        ? "Administrador"
+        : user.role_id === 2
+        ? "Director"
+        : "Administrativo";
     return res.status(201).json({
       success: true,
       data: {
         userId: user.user_id,
         name: user.name,
         email: user.email,
-        role: user.role_id === 1 ? "Administrador" : "Administrativo",
+        role,
       },
       token,
       message: "El usuario ha iniciado sesión",
