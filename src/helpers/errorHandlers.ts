@@ -57,13 +57,14 @@ interface ResponseParams {
   success: boolean;
   message: string;
   data?: any;
+  error?: any;
 }
 
 export const sendResponse = (
   res: Response,
-  { status, success, message, data }: ResponseParams
+  { status, success, message, data, error }: ResponseParams
 ): void => {
-  res.status(status).json({ success, message, data });
+  res.status(status).json({ success, message, data, error });
 };
 
 export const sendSuccess = (
