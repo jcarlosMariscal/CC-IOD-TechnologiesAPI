@@ -1,6 +1,13 @@
 import express from "express";
-import { login, register } from "../controllers/authController";
 import {
+  forgotPassword,
+  login,
+  register,
+  resetPassword,
+} from "../controllers/authController";
+import {
+  validationChangePass,
+  validationEmail,
   validationsLogin,
   validationsRegister,
 } from "../middlewares/validationsAuth";
@@ -9,6 +16,8 @@ const router = express.Router();
 
 router.post("/register", validationsRegister, register);
 router.post("/login", validationsLogin, login);
+router.put("/forgot-password", validationEmail, forgotPassword);
+router.put("/reset-password/:token", validationChangePass, resetPassword);
 router.use(errorMiddleware);
 
 export default router;

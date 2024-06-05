@@ -51,6 +51,7 @@ const updateAdminSchema = Joi.object({
 });
 const loginSchema = Joi.object({ ...emailValidation, ...passwordValidation });
 const changePassSchema = Joi.object({ ...passwordValidation });
+const emailSchema = Joi.object({ ...emailValidation });
 
 export const validationsRegister = (
   req: Request,
@@ -76,6 +77,15 @@ export const validationsUpdateAdmin = (
   next: NextFunction
 ) => {
   const { error } = updateAdminSchema.validate(req.body);
+  if (error) return res.status(400).json({ error: error.details[0].message });
+  next();
+};
+export const validationEmail = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { error } = emailSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
   next();
 };

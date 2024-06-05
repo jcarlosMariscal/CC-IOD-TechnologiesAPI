@@ -1,8 +1,13 @@
 import { NextFunction, Request, Response } from "express";
+import * as nodemailer from "nodemailer";
 import { comparePasswords, hashPassword } from "../services/password.service";
 import { pool } from "../database/connection";
 import { generateToken } from "../services/auth.service";
 import { IUser } from "../models/user.interface";
+import jwt from "jsonwebtoken";
+import { sendEmail } from "../helpers/sendEmail";
+
+const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 
 const validateUser = async (): Promise<boolean> => {
   const query = "SELECT 1 FROM USERS WHERE role_id = 1 LIMIT 1";
@@ -92,4 +97,90 @@ export const login = async (
     next(error);
   }
 };
-// 91
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  const { email }: IUser = req.body;
+  try {
+    const query = {
+      name: "login-user",
+      text: "SELECT user_id, name, email FROM USERS WHERE email = $1",
+      values: [email],
+    };
+    const result = await pool.query(query);
+    const user = result.rows[0];
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "No existe un usuario registrado con este correo." });
+    const token = generateToken({ id: user.user_id, email: user.email }, "1d");
+    const update = {
+      text: "UPDATE USERS SET forgot_password_token = $1 WHERE email = $2",
+      values: [token, email],
+    };
+    const resultUpdate = await pool.query(update);
+    if (!resultUpdate.rowCount) {
+      return res.status(400).json({
+        success: false,
+        message: "Ocurrió un error al intentar guardar el token.",
+      });
+    }
+    await sendEmail(
+      email,
+      "Reestablecer contraseña CCIOD - Technologies",
+      user.name,
+      token
+    );
+    return res.status(201).json({
+      success: true,
+      message: "Se ha enviado un correo con las intrucciones.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  const { password }: IUser = req.body;
+  const token = req.params.token;
+  try {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        res.status(404).json({
+          success: false,
+          message:
+            "El token ha caducado o no hay un token registrado para reestablecer la contraseña. Intenté enviar un nuevo correo para generar una nueva URL.",
+        });
+      }
+    });
+    const hashedPassword = await hashPassword(password);
+    const query = {
+      name: "login-user",
+      text: "UPDATE USERS SET password=$1, forgot_password_token=$2 WHERE forgot_password_token = $3 RETURNING email, name",
+      values: [hashedPassword, null, token],
+    };
+    const result = await pool.query(query);
+    if (!result.rowCount)
+      return res.status(404).json({
+        success: false,
+        message:
+          "No fue posible cambiar la contraseña. Verifique que el token se válido, recuerde que tiene un tiempo de expiración de 1 día.",
+      });
+    await sendEmail(
+      result.rows[0].email,
+      "Contraseña Reestablecida CCIOD - Technologies",
+      result.rows[0].name
+    );
+    return res.status(201).json({
+      success: true,
+      message: "La contraseña se ha modificado.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
