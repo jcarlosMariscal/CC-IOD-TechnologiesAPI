@@ -3,9 +3,11 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 
-export const generateToken = (payload: JwtPayload): string => {
+export const generateToken = (
+  payload: JwtPayload,
+  expiresIn = "6h"
+): string => {
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: "6h",
-    // expiresIn: "60s",
+    expiresIn,
   });
 };
