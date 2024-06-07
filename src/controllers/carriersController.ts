@@ -149,11 +149,14 @@ export const updateCarrier = async (
     const emails = JSON.stringify(information_emails);
 
     const query = {
-      text: "UPDATE CARRIERS SET residence_area=$1, placement_date=$2, placement_time=$3, information_emails=$4, house_arrest=$5, installer_name=$6, observations=$7, relationship_id=$8 WHERE carrier_id=$9",
+      text: "UPDATE CARRIERS SET residence_area=$1, placement_date=$2, placement_time=$3, electronic_bracelet=$4, beacon=$5, wireless_charger=$6, information_emails=$7, house_arrest=$8, installer_name=$9, observations=$10, relationship_id=$11 WHERE carrier_id=$12",
       values: [
         residence_area,
         placement_date,
         placement_time,
+        electronic_bracelet,
+        beacon,
+        wireless_charger,
         emails,
         house_arrest,
         installer_name,

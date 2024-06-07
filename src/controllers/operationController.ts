@@ -10,7 +10,7 @@ export const getAllOperations = async (
 ): Promise<Response | void> => {
   try {
     const query =
-      "SELECT operation_id as id, C.defendant_name as name, contract, installation_report FROM OPERATIONS A INNER JOIN CARRIERS B ON A.carrier_id = B.carrier_id INNER JOIN CLIENTS C ON B.client_id = C.client_id ORDER BY operation_id";
+      "SELECT operation_id as id, C.defendant_name as name, C.contract, installation_report FROM OPERATIONS A INNER JOIN CARRIERS B ON A.carrier_id = B.carrier_id INNER JOIN CLIENTS C ON B.client_id = C.client_id ORDER BY operation_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -60,24 +60,16 @@ export const updateOperation = async (
   const operation_id = parseInt(req.params.id);
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    if (!files.contract && !files.installation_report) {
+    if (!files.installation_report) {
       return res.status(400).json({
         success: false,
         message: "Parece que no hay ningún cambio que hacer.",
       });
     }
     const operation = await pool.query(
-      "SELECT contract, installation_report FROM OPERATIONS WHERE operation_id = $1",
+      "SELECT installation_report FROM OPERATIONS WHERE operation_id = $1",
       [operation_id]
     );
-    if (files.contract && operation.rows[0].contract) {
-      const remove = removeFile(operation.rows[0].contract);
-      if (!remove) {
-        return res.status(400).json({
-          message: "No se pudo eliminar el contrato anterior.",
-        });
-      }
-    }
     if (files.installation_report && operation.rows[0].installation_report) {
       const remove = removeFile(operation.rows[0].installation_report);
       if (!remove) {
@@ -86,18 +78,13 @@ export const updateOperation = async (
         });
       }
     }
-
-    const contract = files.contract
-      ? generateFilename(req, files.contract[0].filename)
-      : operation.rows[0].contract;
-
     const installation_report = files.installation_report
       ? generateFilename(req, files.installation_report[0].filename)
       : operation.rows[0].installation_report;
 
     const query = {
-      text: "UPDATE OPERATIONS SET contract = $1, installation_report = $2 WHERE operation_id = $3",
-      values: [contract, installation_report, operation_id],
+      text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2",
+      values: [installation_report, operation_id],
     };
     await pool.query(query);
     return res.status(201).json({
@@ -114,41 +101,25 @@ export const deleteFile = async (
   next: NextFunction
 ): Promise<Response | void> => {
   const operation_id = parseInt(req.params.id);
-  const { file } = req.body;
   try {
     const operation = await pool.query(
-      "SELECT contract, installation_report FROM OPERATIONS WHERE operation_id = $1",
+      "SELECT installation_report FROM OPERATIONS WHERE operation_id = $1",
       [operation_id]
     );
-    const contractBD = operation.rows[0].contract;
+    // const contractBD = operation.rows[0].contract;
     const reportBD = operation.rows[0].installation_report;
-    if (file === "contract" && contractBD) {
-      const remove = removeFile(contractBD);
-      if (!remove) {
-        return res.status(400).json({
-          success: false,
-          message: "Ha ocurrido un error al intentar eliminar el contrato.",
-        });
-      }
+    const remove = removeFile(reportBD);
+    if (!remove) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
+      });
     }
-    if (file === "installation_report" && reportBD) {
-      const remove = removeFile(reportBD);
-      if (!remove) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
-        });
-      }
-    }
-
-    const contract = file === "contract" ? null : contractBD;
-    const installation_report =
-      file === "installation_report" ? null : reportBD;
 
     const query = {
-      text: "UPDATE OPERATIONS SET contract = $1, installation_report = $2 WHERE operation_id = $3",
-      values: [contract, installation_report, operation_id],
+      text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2",
+      values: [null, operation_id],
     };
     await pool.query(query);
     return res.status(201).json({

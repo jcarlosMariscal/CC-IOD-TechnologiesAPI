@@ -47,7 +47,6 @@ const updateUserSchema = Joi.object({
 });
 const updateAdminSchema = Joi.object({
   ...nameValidation,
-  ...emailValidation,
 });
 const loginSchema = Joi.object({ ...emailValidation, ...passwordValidation });
 const changePassSchema = Joi.object({ ...passwordValidation });
