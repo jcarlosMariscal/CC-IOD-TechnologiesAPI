@@ -117,12 +117,12 @@ export const updateAdmin = async (
   next: NextFunction
 ): Promise<Response | void> => {
   const admin_id = parseInt(req.params.id);
-  const { name, email, role_id } = req.body;
+  const { name } = req.body;
   try {
     const id = admin_id === 1 ? admin_id : 1;
     const query = {
-      text: "UPDATE USERS SET name=$1, email=$2 WHERE user_id = $3",
-      values: [name, email, id],
+      text: "UPDATE USERS SET name=$1 WHERE user_id = $2",
+      values: [name, id],
     };
     const result = await pool.query(query);
     if (!result.rowCount)
@@ -132,7 +132,7 @@ export const updateAdmin = async (
     return res.status(201).json({
       success: true,
       message: "El administrador se ha modificado correctamente",
-      data: { name, email },
+      data: { name },
     });
   } catch (error: any) {
     next(error);

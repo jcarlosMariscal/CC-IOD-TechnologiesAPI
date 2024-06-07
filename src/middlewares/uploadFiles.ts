@@ -40,7 +40,13 @@ const upload = multer({
   },
 });
 
-export const uploadFiles = upload.fields([
+// export const uploadFiles = upload.fields([
+//   { name: "contract", maxCount: 1 },
+//   { name: "installation_report", maxCount: 1 },
+// ]);
+export const uploadContractFile = upload.fields([
   { name: "contract", maxCount: 1 },
+]);
+export const uploadReportFile = upload.fields([
   { name: "installation_report", maxCount: 1 },
 ]);

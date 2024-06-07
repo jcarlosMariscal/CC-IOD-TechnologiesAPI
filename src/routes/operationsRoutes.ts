@@ -7,9 +7,9 @@ import {
   updateOperation,
 } from "../controllers/operationController";
 import { validationFiles } from "../middlewares/validationFiles";
-import { uploadFiles } from "../middlewares/uploadFiles";
 import { validateUserExistence } from "../middlewares/validateUserExistence";
 import { errorMiddleware } from "../middlewares/errorMiddleware";
+import { uploadReportFile } from "../middlewares/uploadFiles";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.get("/:id", getOperationById);
 router.put(
   "/:id",
   validateUserExistence,
-  uploadFiles,
+  uploadReportFile,
   updateOperation,
   validationFiles
 );
