@@ -53,6 +53,24 @@ const prospectSchema = Joi.object({
       "string.email": "El correo electrónico no es válido",
       "any.required": "Los correos para información son obligatorios",
     }),
+  contact_numbers: Joi.array()
+    .items(
+      Joi.string()
+        .length(10)
+        .pattern(/^\d{10}$/)
+    )
+    .min(1)
+    .required()
+    .messages({
+      "array.base": "El campo debe ser un arreglo.",
+      "array.min": "Ingrese al menos un número de contacto",
+      "string.length":
+        "Cada número telefónico debe contener exactamente 10 dígitos.",
+      "string.pattern.base":
+        "Cada número telefónico debe contener solo dígitos numéricos.",
+      "any.required": "Los contactos son obligatorios",
+      "string.base": "El números de contacto deben estar como cadena de texto",
+    }),
   house_arrest: Joi.string().required().messages({
     "any.required": "El arraigo domiciliario es obligatorio",
     "string.empty": "El arraigo domiciliario no puede estar vacío",

@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 
 export const generateToken = (
   payload: JwtPayload,
-  expiresIn = "6h"
+  expiresIn = "30m"
 ): string => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn,
