@@ -8,7 +8,7 @@ export const getAllCarriers = async (
 ): Promise<Response | void> => {
   try {
     const query =
-      "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id ORDER BY carrier_id";
+      "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, A.contact_numbers, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id ORDER BY carrier_id";
     const result = await pool.query(query);
     if (!result.rowCount)
       return res
@@ -33,7 +33,7 @@ export const getCarrierById = async (
   try {
     const query = {
       name: "get-client-id",
-      text: "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id WHERE carrier_id = $1",
+      text: "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, contact_numbers, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id WHERE carrier_id = $1",
       values: [carrier_id],
     };
     const result = await pool.query(query);
@@ -64,6 +64,7 @@ export const createCarrier = async (
     beacon,
     wireless_charger,
     information_emails,
+    contact_numbers,
     house_arrest,
     installer_name,
     observations,
@@ -73,6 +74,7 @@ export const createCarrier = async (
   try {
     const obserOptional = observations ? observations : "";
     const emails = JSON.stringify(information_emails);
+    const numbers = JSON.stringify(contact_numbers);
 
     const client = await pool.query(
       "SELECT status FROM CLIENTS WHERE client_id = $1",
@@ -90,7 +92,7 @@ export const createCarrier = async (
       });
     }
     const query = {
-      text: "INSERT INTO CARRIERS(residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, house_arrest, installer_name, observations, client_id, relationship_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING carrier_id",
+      text: "INSERT INTO CARRIERS(residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, contact_numbers, house_arrest, installer_name, observations, client_id, relationship_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING carrier_id",
       values: [
         residence_area,
         placement_date,
@@ -99,6 +101,7 @@ export const createCarrier = async (
         beacon,
         wireless_charger,
         emails,
+        numbers,
         house_arrest,
         installer_name,
         obserOptional,
@@ -138,18 +141,19 @@ export const updateCarrier = async (
     beacon,
     wireless_charger,
     information_emails,
+    contact_numbers,
     house_arrest,
     installer_name,
     observations,
-    client_id,
     relationship_id,
   } = req.body;
   try {
     const obserOptional = observations ? observations : "";
     const emails = JSON.stringify(information_emails);
+    const numbers = JSON.stringify(contact_numbers);
 
     const query = {
-      text: "UPDATE CARRIERS SET residence_area=$1, placement_date=$2, placement_time=$3, electronic_bracelet=$4, beacon=$5, wireless_charger=$6, information_emails=$7, house_arrest=$8, installer_name=$9, observations=$10, relationship_id=$11 WHERE carrier_id=$12",
+      text: "UPDATE CARRIERS SET residence_area=$1, placement_date=$2, placement_time=$3, electronic_bracelet=$4, beacon=$5, wireless_charger=$6, information_emails=$7, contact_numbers=$8, house_arrest=$9, installer_name=$10, observations=$11, relationship_id=$12 WHERE carrier_id=$13",
       values: [
         residence_area,
         placement_date,
@@ -158,6 +162,7 @@ export const updateCarrier = async (
         beacon,
         wireless_charger,
         emails,
+        numbers,
         house_arrest,
         installer_name,
         obserOptional,
