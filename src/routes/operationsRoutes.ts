@@ -2,6 +2,7 @@ import express from "express";
 import { authenticateToken } from "../middlewares/authenticateToken";
 import {
   deleteFile,
+  deleteOperation,
   getAllOperations,
   getOperationById,
   updateOperation,
@@ -25,6 +26,7 @@ router.put(
 );
 
 router.put("/delete-file/:id", deleteFile);
+router.delete("/:id", deleteOperation);
 router.use(errorMiddleware);
 
 export default router;

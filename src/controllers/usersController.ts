@@ -70,14 +70,20 @@ export const createUser = async (
       });
     const hashedPassword = await hashPassword(password);
     const query = {
-      text: "INSERT INTO USERS(name, email, password, role_id) VALUES($1, $2, $3, $4)",
+      text: "WITH inserted AS (INSERT INTO USERS (name, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING *) SELECT A.user_id as id, A.name, A.email, A.role_id, B.name as role_name FROM inserted A INNER JOIN ROLES B ON A.role_id = B.role_id",
       values: [name, email, hashedPassword, role_id],
     };
-    await pool.query(query);
+    const result = await pool.query(query);
+    if (!result.rowCount) {
+      return res.status(400).json({
+        success: false,
+        message: "No se pudo agregar el usuario.",
+      });
+    }
     return res.status(201).json({
       success: true,
       message: "El usuario se ha creado correctamente",
-      data: { name, email },
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);
@@ -92,9 +98,8 @@ export const updateUser = async (
   const user_id = parseInt(req.params.id);
   const { name, email, role_id } = req.body;
   try {
-    // const hashedPassword = await hashPassword(password);
     const query = {
-      text: "UPDATE USERS SET name=$1, email=$2, role_id=$3 WHERE user_id = $4",
+      text: "WITH updated AS (UPDATE USERS SET name=$1, email=$2, role_id=$3 WHERE user_id = $4 RETURNING *) SELECT A.user_id as id, A.name, A.email, A.role_id, B.name as role_name FROM updated A INNER JOIN ROLES B ON A.role_id = B.role_id",
       values: [name, email, role_id, user_id],
     };
     const result = await pool.query(query);
@@ -105,7 +110,7 @@ export const updateUser = async (
     return res.status(201).json({
       success: true,
       message: "El usuario se ha modificado correctamente",
-      data: { name, email },
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);
