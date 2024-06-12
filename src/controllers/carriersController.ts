@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
+import { removeFile } from "../helpers/removeFile";
 
 export const getAllCarriers = async (
   req: Request,
@@ -92,7 +93,7 @@ export const createCarrier = async (
       });
     }
     const query = {
-      text: "INSERT INTO CARRIERS(residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, contact_numbers, house_arrest, installer_name, observations, client_id, relationship_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING carrier_id",
+      text: "WITH inserted AS (INSERT INTO CARRIERS (residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, contact_numbers, house_arrest, installer_name, observations, client_id, relationship_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *) SELECT A.carrier_id AS id, A.residence_area, A.placement_date, A.placement_time, A.electronic_bracelet, A.beacon, A.wireless_charger, A.information_emails, A.contact_numbers, A.house_arrest, A.installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name AS name, C.name AS relationship_name FROM inserted A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id",
       values: [
         residence_area,
         placement_date,
@@ -110,18 +111,22 @@ export const createCarrier = async (
       ],
     };
     const result = await pool.query(query);
-    if (result.rowCount) {
-      const carrier_id = result.rows[0].carrier_id;
-      const query = {
-        text: "INSERT INTO OPERATIONS(carrier_id) VALUES($1)",
-        values: [carrier_id],
-      };
-      await pool.query(query);
+    if (!result.rowCount) {
+      return res.status(400).json({
+        success: false,
+        message: "No se pudo agregar el portador.",
+      });
     }
+    const carrier_id = result.rows[0].id;
+    const query2 = {
+      text: "INSERT INTO OPERATIONS(carrier_id) VALUES($1)",
+      values: [carrier_id],
+    };
+    await pool.query(query2);
     return res.status(201).json({
       success: true,
-      message: "El prospecto se ha creado correctamente",
-      data: req.body,
+      message: "El portador se ha modificado correctamente",
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);
@@ -153,7 +158,10 @@ export const updateCarrier = async (
     const numbers = JSON.stringify(contact_numbers);
 
     const query = {
-      text: "UPDATE CARRIERS SET residence_area=$1, placement_date=$2, placement_time=$3, electronic_bracelet=$4, beacon=$5, wireless_charger=$6, information_emails=$7, contact_numbers=$8, house_arrest=$9, installer_name=$10, observations=$11, relationship_id=$12 WHERE carrier_id=$13",
+      text: `
+      WITH updated AS (
+      UPDATE CARRIERS CA SET residence_area=$1, placement_date=$2, placement_time=$3, electronic_bracelet=$4, beacon=$5, wireless_charger=$6, information_emails=$7, contact_numbers=$8, house_arrest=$9, installer_name=$10, observations=$11, relationship_id=$12 WHERE carrier_id=$13 RETURNING carrier_id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, contact_numbers, house_arrest, installer_name, observations, relationship_id, client_id)
+      SELECT A.carrier_id AS id, A.residence_area, A.placement_date, A.placement_time, A.electronic_bracelet, A.beacon, A.wireless_charger, A.information_emails, A.contact_numbers, A.house_arrest, A.installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name AS name, C.name AS relationship_name FROM updated A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id`,
       values: [
         residence_area,
         placement_date,
@@ -178,6 +186,7 @@ export const updateCarrier = async (
     return res.status(201).json({
       success: true,
       message: "El portador se ha modificado correctamente",
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);

@@ -58,7 +58,10 @@ export const validationsRegister = (
   next: NextFunction
 ) => {
   const { error } = registerSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   next();
 };
 export const validationsUpdate = (
@@ -67,7 +70,10 @@ export const validationsUpdate = (
   next: NextFunction
 ) => {
   const { error } = updateUserSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   next();
 };
 export const validationsUpdateAdmin = (
@@ -76,7 +82,10 @@ export const validationsUpdateAdmin = (
   next: NextFunction
 ) => {
   const { error } = updateAdminSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   next();
 };
 export const validationEmail = (
@@ -85,7 +94,10 @@ export const validationEmail = (
   next: NextFunction
 ) => {
   const { error } = emailSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   next();
 };
 export const validationChangePass = (
@@ -94,7 +106,10 @@ export const validationChangePass = (
   next: NextFunction
 ) => {
   const { error } = changePassSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   next();
 };
 export const validationsLogin = (
@@ -103,6 +118,9 @@ export const validationsLogin = (
   next: NextFunction
 ) => {
   const { error } = loginSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   next();
 };

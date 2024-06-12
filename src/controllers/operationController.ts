@@ -83,13 +83,58 @@ export const updateOperation = async (
       : operation.rows[0].installation_report;
 
     const query = {
-      text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2",
+      text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2 RETURNING installation_report",
       values: [installation_report, operation_id],
     };
-    await pool.query(query);
+    const result = await pool.query(query);
     return res.status(201).json({
       success: true,
       message: "La operación se ha modificado correctamente",
+      data: { installation_report: result.rows[0].installation_report },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+const removeFileOperation = async (carrier_id: number): Promise<boolean> => {
+  const operation = await pool.query(
+    "SELECT installation_report FROM OPERATIONS WHERE carrier_id = $1",
+    [carrier_id]
+  );
+  const reportBD = operation.rowCount
+    ? operation.rows[0].installation_report
+    : null;
+  if (!reportBD) return true;
+  const remove = removeFile(reportBD);
+  if (!remove) return false;
+  return true;
+};
+export const deleteOperation = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  const carrier_id = parseInt(req.params.id);
+  try {
+    const remove = removeFileOperation(carrier_id);
+    if (!remove)
+      return res.status(400).json({
+        success: false,
+        message:
+          "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
+      });
+    const query = {
+      text: "DELETE FROM OPERATIONS WHERE carrier_id = $1",
+      values: [carrier_id],
+    };
+    const result = await pool.query(query);
+    if (!result.rowCount)
+      return res
+        .status(404)
+        .json({ message: "La operación que desea eliminar no se encuentra." });
+    return res.status(201).json({
+      success: true,
+      message: `La operación ha sido eliminado`,
     });
   } catch (error: any) {
     next(error);
@@ -102,21 +147,13 @@ export const deleteFile = async (
 ): Promise<Response | void> => {
   const operation_id = parseInt(req.params.id);
   try {
-    const operation = await pool.query(
-      "SELECT installation_report FROM OPERATIONS WHERE operation_id = $1",
-      [operation_id]
-    );
-    // const contractBD = operation.rows[0].contract;
-    const reportBD = operation.rows[0].installation_report;
-    const remove = removeFile(reportBD);
-    if (!remove) {
+    const remove = removeFileOperation(operation_id);
+    if (!remove)
       return res.status(400).json({
         success: false,
         message:
           "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
       });
-    }
-
     const query = {
       text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2",
       values: [null, operation_id],

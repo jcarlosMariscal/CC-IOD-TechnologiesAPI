@@ -9,11 +9,14 @@ export const authenticateToken = (
 ) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "No autorizado" });
+  if (!token)
+    return res.status(401).json({ success: false, message: "No autorizado" });
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       // console.error(`Error en la autenticación: ${err}`);
-      res.status(403).json({ error: "No tienes acceso a este recurso" });
+      res
+        .status(403)
+        .json({ success: false, message: "No tienes acceso a este recurso" });
     }
     next();
   });

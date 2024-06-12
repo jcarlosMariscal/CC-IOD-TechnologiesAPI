@@ -62,14 +62,17 @@ export const createProspect = async (
     const optionalData = observations ? observations : "";
 
     const query = {
-      text: "INSERT INTO PROSPECTS(name, email, phone, date, relationship_id, status, observations) VALUES($1, $2, $3, $4, $5, $6, $7)",
+      // const query =
+      // "SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM PROSPECTS A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id ORDER BY prospect_id";
+      text: "WITH inserted AS (INSERT INTO PROSPECTS(name, email, phone, date, relationship_id, status, observations) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *) SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM inserted A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id",
+      // text: "INSERT INTO PROSPECTS(name, email, phone, date, relationship_id, status, observations) VALUES($1, $2, $3, $4, $5, $6, $7)",
       values: [name, email, phone, date, relationship_id, status, optionalData],
     };
-    await pool.query(query);
+    const result = await pool.query(query);
     return res.status(201).json({
       success: true,
       message: "El prospecto se ha creado correctamente",
-      data: { name, email },
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);
@@ -91,7 +94,8 @@ export const updateProspect = async (
     const newStatus = prospect.rowCount ? "Aprobado" : status;
     const optionalData = observations ? observations : "";
     const query = {
-      text: "UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8",
+      text: "WITH updated AS (UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8 RETURNING *) SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM updated A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id",
+      // text: "UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8",
       values: [
         name,
         email,
@@ -111,7 +115,7 @@ export const updateProspect = async (
     return res.status(201).json({
       success: true,
       message: "El prospecto se ha modificado correctamente",
-      data: { name, email },
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);

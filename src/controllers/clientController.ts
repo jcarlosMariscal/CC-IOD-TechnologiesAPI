@@ -90,7 +90,10 @@ export const createClient = async (
       });
     }
     const query = {
-      text: "INSERT INTO CLIENTS(contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+      // const query =
+      // "SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status, contract FROM CLIENTS ORDER BY client_id";
+      text: "WITH inserted AS (INSERT INTO CLIENTS(contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *) SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status, contract FROM inserted",
+      // text: "INSERT INTO CLIENTS(contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
       values: [
         contract_number,
         defendant_name,
@@ -107,11 +110,11 @@ export const createClient = async (
         prospect_id,
       ],
     };
-    await pool.query(query);
+    const result = await pool.query(query);
     return res.status(201).json({
       success: true,
       message: "El prospecto se ha creado correctamente",
-      data: req.body,
+      data: result.rows[0],
     });
   } catch (error: any) {
     next(error);
@@ -153,8 +156,9 @@ export const updateClient = async (
       ? investigation_file_number
       : null;
     const numbers = JSON.stringify(contact_numbers);
+    // contract
     const query = {
-      text: "UPDATE CLIENTS SET contract_number=$1, defendant_name=$2, criminal_case=$3, investigation_file_number=$4, judge_name=$5, court_name=$6, lawyer_name=$7, signer_name=$8, contact_numbers=$9, hearing_date=$10, observations=$11, status=$12 WHERE client_id = $13",
+      text: "WITH updated AS (UPDATE CLIENTS SET contract_number=$1, defendant_name=$2, criminal_case=$3, investigation_file_number=$4, judge_name=$5, court_name=$6, lawyer_name=$7, signer_name=$8, contact_numbers=$9, hearing_date=$10, observations=$11, status=$12 WHERE client_id = $13 RETURNING contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id, contract, client_id) SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status, contract FROM updated",
       values: [
         contract_number,
         defendant_name,
@@ -179,7 +183,7 @@ export const updateClient = async (
     return res.status(201).json({
       success: true,
       message: "El prospecto se ha modificado correctamente",
-      data: { defendant_name },
+      data: result.rows[0],
     });
   } catch (error) {
     next(error);
@@ -258,6 +262,7 @@ export const uploadContract = async (
       const remove = removeFile(client.rows[0].contract);
       if (!remove) {
         return res.status(400).json({
+          success: false,
           message: "No se pudo eliminar el contrato anterior.",
         });
       }
@@ -267,13 +272,14 @@ export const uploadContract = async (
       : client.rows[0].contract;
 
     const query = {
-      text: "UPDATE CLIENTS SET contract = $1 WHERE client_id = $2",
+      text: "UPDATE CLIENTS SET contract = $1 WHERE client_id = $2 RETURNING contract",
       values: [contract, client_id],
     };
-    await pool.query(query);
+    const result = await pool.query(query);
     return res.status(201).json({
       success: true,
       message: "El contrato se ha subido.",
+      data: { contract: result.rows[0].contract },
     });
   } catch (error: any) {
     next(error);
