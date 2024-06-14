@@ -81,6 +81,12 @@ export const createCarrier = async (
       "SELECT status FROM CLIENTS WHERE client_id = $1",
       [client_id]
     );
+    if (!client.rowCount) {
+      return res.status(404).json({
+        success: false,
+        message: "No hay ningún cliente con el ID especificado",
+      });
+    }
     const cStatus = client.rows[0].status;
     if (
       cStatus === "Pendiente de aprobación" ||
@@ -89,7 +95,7 @@ export const createCarrier = async (
       return res.status(400).json({
         success: false,
         message:
-          'Para agregar un portador este debe estar como cliente en estado "Pendiente de colocación" o "Colocado"',
+          "Para agregar un portador este debe estar como cliente en estado Pendiente de colocación o Colocado",
       });
     }
     const query = {
@@ -125,7 +131,7 @@ export const createCarrier = async (
     await pool.query(query2);
     return res.status(201).json({
       success: true,
-      message: "El portador se ha modificado correctamente",
+      message: "El portador se ha agregado correctamente",
       data: result.rows[0],
     });
   } catch (error: any) {

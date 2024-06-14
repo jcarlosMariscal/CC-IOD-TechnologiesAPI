@@ -6,14 +6,13 @@ import {
   deleteContract,
   getAllClients,
   getApprovedClientsWithoutCarrier,
-  getClientById,
   updateClient,
   uploadContract,
 } from "../controllers/clientController";
-import { validationsClient } from "../middlewares/validationsClient";
 import { errorMiddleware } from "../middlewares/errorMiddleware";
 import { validationFiles } from "../middlewares/validationFiles";
 import { uploadContractFile } from "../middlewares/uploadFiles";
+import { validationsClient } from "../middlewares/validationMiddlewares";
 
 const router = express.Router();
 
@@ -21,7 +20,6 @@ router.use(authenticateToken);
 router.get("/", getAllClients);
 router.get("/approved-without-carrier/", getApprovedClientsWithoutCarrier);
 router.post("/", validationsClient, createClient);
-router.get("/:id", getClientById);
 router.put("/:id", validationsClient, updateClient);
 router.put(
   "/upload-contract/:id",

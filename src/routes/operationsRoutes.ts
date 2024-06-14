@@ -4,7 +4,6 @@ import {
   deleteFile,
   deleteOperation,
   getAllOperations,
-  getOperationById,
   updateOperation,
 } from "../controllers/operationController";
 import { validationFiles } from "../middlewares/validationFiles";
@@ -16,7 +15,6 @@ const router = express.Router();
 
 router.use(authenticateToken);
 router.get("/", getAllOperations);
-router.get("/:id", getOperationById);
 router.put(
   "/:id",
   validateUserExistence,
