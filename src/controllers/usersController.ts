@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
 import { hashPassword } from "../services/password.service";
+import { lowercase } from "../helpers/convertToLowercase";
 
 export const getAllUsers = async (
   req: Request,
@@ -25,32 +26,11 @@ export const getAllUsers = async (
   }
 };
 
-export const getUserById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
-  const user_id = parseInt(req.params.id);
-  try {
-    const query = {
-      name: "get-prospect-id",
-      text: "SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id WHERE user_id = $1",
-      values: [user_id],
-    };
-    const result = await pool.query(query);
-    if (!result.rowCount)
-      return res
-        .status(404)
-        .json({ message: "No se encontró ningún usuario." });
-    return res.status(201).json({
-      success: true,
-      message: "Datos del usuario obtenidos",
-      data: result.rows[0],
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+// export const getUserById = async (req: Request, res: Response, next: NextFunction
+// ): Promise<Response | void> => {
+//   const user_id = parseInt(req.params.id);
+//   // SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id WHERE user_id = $1
+// };
 
 export const createUser = async (
   req: Request,
@@ -69,9 +49,10 @@ export const createUser = async (
         role_id,
       });
     const hashedPassword = await hashPassword(password);
+    const lowerEmail = lowercase(email);
     const query = {
       text: "WITH inserted AS (INSERT INTO USERS (name, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING *) SELECT A.user_id as id, A.name, A.email, A.role_id, B.name as role_name FROM inserted A INNER JOIN ROLES B ON A.role_id = B.role_id",
-      values: [name, email, hashedPassword, role_id],
+      values: [name, lowerEmail, hashedPassword, role_id],
     };
     const result = await pool.query(query);
     if (!result.rowCount) {
@@ -98,9 +79,10 @@ export const updateUser = async (
   const user_id = parseInt(req.params.id);
   const { name, email, role_id } = req.body;
   try {
+    const lowerEmail = lowercase(email);
     const query = {
       text: "WITH updated AS (UPDATE USERS SET name=$1, email=$2, role_id=$3 WHERE user_id = $4 RETURNING *) SELECT A.user_id as id, A.name, A.email, A.role_id, B.name as role_name FROM updated A INNER JOIN ROLES B ON A.role_id = B.role_id",
-      values: [name, email, role_id, user_id],
+      values: [name, lowerEmail, role_id, user_id],
     };
     const result = await pool.query(query);
     if (!result.rowCount)

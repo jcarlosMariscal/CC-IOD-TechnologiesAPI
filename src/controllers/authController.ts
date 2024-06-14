@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import * as nodemailer from "nodemailer";
 import { comparePasswords, hashPassword } from "../services/password.service";
 import { pool } from "../database/connection";
 import { generateToken } from "../services/auth.service";
 import { IUser } from "../models/user.interface";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../helpers/sendEmail";
+import { lowercase } from "../helpers/convertToLowercase";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 
@@ -30,11 +30,12 @@ export const register = async (
     const isAdmin = await validateUser();
     if (isAdmin)
       return res.status(500).json({ message: "Administrador ya registrado." });
+    const lowerEmail = lowercase(email);
     const role = 1;
     const hashedPassword = await hashPassword(password);
     const query = {
       text: "INSERT INTO USERS(name, email,password, role_id) VALUES($1, $2, $3, $4) RETURNING user_id",
-      values: [name, email, hashedPassword, role],
+      values: [name, lowerEmail, hashedPassword, role],
     };
     await pool.query(query);
 
@@ -55,10 +56,11 @@ export const login = async (
 ): Promise<Response | void> => {
   const { email, password }: IUser = req.body;
   try {
+    const lowerEmail = lowercase(email);
     const query = {
       name: "login-user",
       text: "SELECT user_id, name, email, password, role_id FROM USERS WHERE email = $1",
-      values: [email],
+      values: [lowerEmail],
     };
     const result = await pool.query(query);
     const user = result.rows[0];
@@ -104,10 +106,11 @@ export const forgotPassword = async (
 ): Promise<Response | void> => {
   const { email }: IUser = req.body;
   try {
+    const lowerEmail = lowercase(email);
     const query = {
       name: "login-user",
       text: "SELECT user_id, name, email FROM USERS WHERE email = $1",
-      values: [email],
+      values: [lowerEmail],
     };
     const result = await pool.query(query);
     const user = result.rows[0];
@@ -118,7 +121,7 @@ export const forgotPassword = async (
     const token = generateToken({ id: user.user_id, email: user.email }, "1d");
     const update = {
       text: "UPDATE USERS SET forgot_password_token = $1 WHERE email = $2",
-      values: [token, email],
+      values: [token, lowerEmail],
     };
     const resultUpdate = await pool.query(update);
     if (!resultUpdate.rowCount) {
@@ -128,7 +131,7 @@ export const forgotPassword = async (
       });
     }
     await sendEmail(
-      email,
+      lowerEmail,
       "Reestablecer contraseña CCIOD - Technologies",
       user.name,
       token
