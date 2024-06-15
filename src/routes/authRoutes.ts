@@ -10,7 +10,7 @@ import {
   validationEmail,
   validationsLogin,
   validationsRegister,
-} from "../middlewares/validationsAuth";
+} from "../middlewares/authMiddelewares";
 import { errorMiddleware } from "../middlewares/errorMiddleware";
 const router = express.Router();
 

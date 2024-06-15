@@ -5,7 +5,6 @@ import {
   createUser,
   deleteUser,
   getAllUsers,
-  getUserById,
   updateAdmin,
   updateUser,
 } from "../controllers/usersController";
@@ -14,7 +13,7 @@ import {
   validationsRegister,
   validationsUpdate,
   validationsUpdateAdmin,
-} from "../middlewares/validationsAuth";
+} from "../middlewares/authMiddelewares";
 import { errorMiddleware } from "../middlewares/errorMiddleware";
 
 const router = express.Router();
@@ -22,7 +21,6 @@ const router = express.Router();
 router.use(authenticateToken);
 router.get("/", getAllUsers);
 router.post("/", validationsRegister, createUser);
-router.get("/:id", getUserById);
 router.put("/:id", validationsUpdate, updateUser);
 router.put("/update-admin/:id", validationsUpdateAdmin, updateAdmin);
 router.put("/change-password/:id", validationChangePass, changePassword);

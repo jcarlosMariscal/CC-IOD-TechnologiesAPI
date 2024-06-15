@@ -1,21 +1,19 @@
 import { NextFunction, Request, Response } from "express";
-import * as nodemailer from "nodemailer";
 import { comparePasswords, hashPassword } from "../services/password.service";
 import { pool } from "../database/connection";
 import { generateToken } from "../services/auth.service";
 import { IUser } from "../models/user.interface";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../helpers/sendEmail";
-
+import { lowercase } from "../helpers/helpers";
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 
 const validateUser = async (): Promise<boolean> => {
-  const query = "SELECT 1 FROM USERS WHERE role_id = 1 LIMIT 1";
   try {
+    const query = "SELECT 1 FROM USERS WHERE role_id = 1 LIMIT 1";
     const res = await pool.query(query);
     return (res.rowCount ?? 0) > 0;
   } catch (error) {
-    console.error("Error al validar usuario:", error);
     throw error;
   }
 };
@@ -29,12 +27,13 @@ export const register = async (
   try {
     const isAdmin = await validateUser();
     if (isAdmin)
-      return res.status(500).json({ message: "Administrador ya registrado." });
+      return res.status(400).json({ message: "Administrador ya registrado." });
+    const lowerEmail = lowercase(email);
     const role = 1;
     const hashedPassword = await hashPassword(password);
     const query = {
-      text: "INSERT INTO USERS(name, email,password, role_id) VALUES($1, $2, $3, $4) RETURNING user_id",
-      values: [name, email, hashedPassword, role],
+      text: "INSERT INTO USERS(name, email,password, role_id) VALUES($1, $2, $3, $4)",
+      values: [name, lowerEmail, hashedPassword, role],
     };
     await pool.query(query);
 
@@ -55,10 +54,11 @@ export const login = async (
 ): Promise<Response | void> => {
   const { email, password }: IUser = req.body;
   try {
+    const lowerEmail = lowercase(email);
     const query = {
       name: "login-user",
       text: "SELECT user_id, name, email, password, role_id FROM USERS WHERE email = $1",
-      values: [email],
+      values: [lowerEmail],
     };
     const result = await pool.query(query);
     const user = result.rows[0];
@@ -70,12 +70,6 @@ export const login = async (
         .status(401)
         .json({ message: "Correo y contraseña no coinciden." });
     const token = generateToken({ id: user.user_id, email: user.email });
-    // res.cookie("jwt", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   // maxAge: 3600000, // 1 hour
-    //   maxAge: 60,
-    // });
     const role =
       user.role_id === 1
         ? "Administrador"
@@ -104,10 +98,11 @@ export const forgotPassword = async (
 ): Promise<Response | void> => {
   const { email }: IUser = req.body;
   try {
+    const lowerEmail = lowercase(email);
     const query = {
       name: "login-user",
       text: "SELECT user_id, name, email FROM USERS WHERE email = $1",
-      values: [email],
+      values: [lowerEmail],
     };
     const result = await pool.query(query);
     const user = result.rows[0];
@@ -118,7 +113,7 @@ export const forgotPassword = async (
     const token = generateToken({ id: user.user_id, email: user.email }, "1d");
     const update = {
       text: "UPDATE USERS SET forgot_password_token = $1 WHERE email = $2",
-      values: [token, email],
+      values: [token, lowerEmail],
     };
     const resultUpdate = await pool.query(update);
     if (!resultUpdate.rowCount) {
@@ -128,7 +123,7 @@ export const forgotPassword = async (
       });
     }
     await sendEmail(
-      email,
+      lowerEmail,
       "Reestablecer contraseña CCIOD - Technologies",
       user.name,
       token
@@ -171,11 +166,8 @@ export const resetPassword = async (
         message:
           "No fue posible cambiar la contraseña. Verifique que el token se válido, recuerde que tiene un tiempo de expiración de 1 día.",
       });
-    await sendEmail(
-      result.rows[0].email,
-      "Contraseña Reestablecida CCIOD - Technologies",
-      result.rows[0].name
-    );
+    const { email, name } = result.rows[0];
+    await sendEmail(email, "Contraseña Reestablecida CCIOD", name);
     return res.status(201).json({
       success: true,
       message: "La contraseña se ha modificado.",

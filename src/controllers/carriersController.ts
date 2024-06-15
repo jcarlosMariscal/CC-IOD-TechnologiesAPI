@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
-import { removeFile } from "../helpers/removeFile";
 
 export const getAllCarriers = async (
   req: Request,
@@ -19,33 +18,6 @@ export const getAllCarriers = async (
       success: true,
       message: "Información de todos los portadores",
       data: result.rows,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getCarrierById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
-  const carrier_id = parseInt(req.params.id);
-  try {
-    const query = {
-      name: "get-client-id",
-      text: "SELECT carrier_id as id, residence_area, placement_date, placement_time, electronic_bracelet, beacon, wireless_charger, information_emails, contact_numbers, house_arrest, installer_name, A.observations, A.client_id, A.relationship_id, B.defendant_name as name, C.name as relationship_name FROM CARRIERS A INNER JOIN CLIENTS B ON A.client_id = B.client_id INNER JOIN RELATIONSHIPS C ON A.relationship_id = C.relationship_id WHERE carrier_id = $1",
-      values: [carrier_id],
-    };
-    const result = await pool.query(query);
-    if (!result.rowCount)
-      return res
-        .status(404)
-        .json({ message: "No se encontró ningún portador." });
-    return res.status(201).json({
-      success: true,
-      message: "Datos del portador obtenidos",
-      data: result.rows[0],
     });
   } catch (error) {
     next(error);
@@ -81,6 +53,12 @@ export const createCarrier = async (
       "SELECT status FROM CLIENTS WHERE client_id = $1",
       [client_id]
     );
+    if (!client.rowCount) {
+      return res.status(404).json({
+        success: false,
+        message: "No hay ningún cliente con el ID especificado",
+      });
+    }
     const cStatus = client.rows[0].status;
     if (
       cStatus === "Pendiente de aprobación" ||
@@ -89,7 +67,7 @@ export const createCarrier = async (
       return res.status(400).json({
         success: false,
         message:
-          'Para agregar un portador este debe estar como cliente en estado "Pendiente de colocación" o "Colocado"',
+          "Para agregar un portador este debe estar como cliente en estado Pendiente de colocación o Colocado",
       });
     }
     const query = {
@@ -125,7 +103,7 @@ export const createCarrier = async (
     await pool.query(query2);
     return res.status(201).json({
       success: true,
-      message: "El portador se ha modificado correctamente",
+      message: "El portador se ha agregado correctamente",
       data: result.rows[0],
     });
   } catch (error: any) {
@@ -217,4 +195,3 @@ export const deleteCarrier = async (
     next(error);
   }
 };
-// 203

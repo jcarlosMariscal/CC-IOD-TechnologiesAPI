@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
-import { removeFile } from "../helpers/removeFile";
-import { generateFilename } from "../helpers/generateFilename";
+import { generateFilename, removeFile } from "../helpers/helpers";
 
 export const getAllOperations = async (
   req: Request,

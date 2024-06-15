@@ -1,4 +1,3 @@
-// src/errorMiddleware.ts
 import { Request, Response, NextFunction } from "express";
 import { handleDatabaseError, sendResponse } from "../helpers/errorHandlers";
 
