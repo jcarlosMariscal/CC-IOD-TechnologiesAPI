@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
-import { lowercase } from "../helpers/convertToLowercase";
+import { lowercase } from "../helpers/helpers";
 
 export const getAllProspects = async (
   req: Request,
@@ -76,7 +76,6 @@ export const updateProspect = async (
     const optionalData = observations ? observations : "";
     const query = {
       text: "WITH updated AS (UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8 RETURNING *) SELECT prospect_id as id, A.name, email, phone, date, observations, status, A.relationship_id, B.name as relationship_name FROM updated A INNER JOIN RELATIONSHIPS B ON A.relationship_id = B.relationship_id",
-      // text: "UPDATE PROSPECTS SET name=$1, email=$2, phone=$3, date=$4, relationship_id=$5, status=$6, observations=$7 WHERE prospect_id = $8",
       values: [
         name,
         lowerEmail,

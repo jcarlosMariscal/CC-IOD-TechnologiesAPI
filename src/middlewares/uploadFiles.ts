@@ -39,11 +39,6 @@ const upload = multer({
     fileSize: 5000000, // 5 MB
   },
 });
-
-// export const uploadFiles = upload.fields([
-//   { name: "contract", maxCount: 1 },
-//   { name: "installation_report", maxCount: 1 },
-// ]);
 export const uploadContractFile = upload.fields([
   { name: "contract", maxCount: 1 },
 ]);

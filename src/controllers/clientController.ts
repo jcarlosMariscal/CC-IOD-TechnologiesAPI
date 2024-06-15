@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
-import { removeFile } from "../helpers/removeFile";
-import { generateFilename } from "../helpers/generateFilename";
+import { generateFilename, removeFile } from "../helpers/helpers";
 
 export const getAllClients = async (
   req: Request,
@@ -20,32 +19,6 @@ export const getAllClients = async (
       success: true,
       message: "Información de todos los clientes",
       data: result.rows,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-export const getClientById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
-  const client_id = parseInt(req.params.id);
-  try {
-    const query = {
-      name: "get-client-id",
-      text: "SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status FROM CLIENTS WHERE client_id = $1",
-      values: [client_id],
-    };
-    const result = await pool.query(query);
-    if (!result.rowCount)
-      return res
-        .status(404)
-        .json({ message: "No se encontró ningún cliente." });
-    return res.status(201).json({
-      success: true,
-      message: "Datos del cliente obtenidos",
-      data: result.rows[0],
     });
   } catch (error) {
     next(error);
@@ -90,10 +63,7 @@ export const createClient = async (
       });
     }
     const query = {
-      // const query =
-      // "SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status, contract FROM CLIENTS ORDER BY client_id";
       text: "WITH inserted AS (INSERT INTO CLIENTS(contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *) SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status, contract FROM inserted",
-      // text: "INSERT INTO CLIENTS(contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
       values: [
         contract_number,
         defendant_name,
@@ -156,7 +126,6 @@ export const updateClient = async (
       ? investigation_file_number
       : null;
     const numbers = JSON.stringify(contact_numbers);
-    // contract
     const query = {
       text: "WITH updated AS (UPDATE CLIENTS SET contract_number=$1, defendant_name=$2, criminal_case=$3, investigation_file_number=$4, judge_name=$5, court_name=$6, lawyer_name=$7, signer_name=$8, contact_numbers=$9, hearing_date=$10, observations=$11, status=$12 WHERE client_id = $13 RETURNING contract_number, defendant_name, criminal_case, investigation_file_number, judge_name, court_name, lawyer_name, signer_name, contact_numbers, hearing_date, observations, status, prospect_id, contract, client_id) SELECT client_id as id, contact_numbers, contract_number, court_name, criminal_case, defendant_name as name, hearing_date, investigation_file_number, judge_name, lawyer_name, observations, prospect_id, signer_name, status, contract FROM updated",
       values: [

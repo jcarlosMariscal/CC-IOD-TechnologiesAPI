@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
 import { hashPassword } from "../services/password.service";
-import { lowercase } from "../helpers/convertToLowercase";
+import { lowercase } from "../helpers/helpers";
 
 export const getAllUsers = async (
   req: Request,
@@ -25,12 +25,6 @@ export const getAllUsers = async (
     next(error);
   }
 };
-
-// export const getUserById = async (req: Request, res: Response, next: NextFunction
-// ): Promise<Response | void> => {
-//   const user_id = parseInt(req.params.id);
-//   // SELECT user_id as id, A.name, email, A.role_id, B.name as role_name FROM USERS A INNER JOIN ROLES B ON A.role_id = B.role_id WHERE user_id = $1
-// };
 
 export const createUser = async (
   req: Request,
