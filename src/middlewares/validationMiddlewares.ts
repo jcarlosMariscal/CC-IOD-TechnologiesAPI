@@ -20,12 +20,11 @@ export const validationsProspect = (
 ) => {
   const { error } = prospectSchema.validate(req.body);
   if (error) {
-    const message = error.details[0].message;
+    const message = messageArrValues(error.details[0].message);
     return res.status(400).json({ success: false, message });
   }
   next();
 };
-
 export const validationsClient = (
   req: Request,
   res: Response,

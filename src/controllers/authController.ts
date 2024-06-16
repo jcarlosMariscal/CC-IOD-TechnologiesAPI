@@ -57,7 +57,7 @@ export const login = async (
     const lowerEmail = lowercase(email);
     const query = {
       name: "login-user",
-      text: "SELECT user_id, name, email, password, role_id FROM USERS WHERE email = $1",
+      text: "SELECT user_id, name, email, role_id as role, password, role_id FROM USERS WHERE email = $1",
       values: [lowerEmail],
     };
     const result = await pool.query(query);
@@ -69,7 +69,11 @@ export const login = async (
       return res
         .status(401)
         .json({ message: "Correo y contraseña no coinciden." });
-    const token = generateToken({ id: user.user_id, email: user.email });
+    const token = generateToken({
+      id: user.user_id,
+      email: user.email,
+      role: user.role,
+    });
     const role =
       user.role_id === 1
         ? "Administrador"
@@ -101,7 +105,7 @@ export const forgotPassword = async (
     const lowerEmail = lowercase(email);
     const query = {
       name: "login-user",
-      text: "SELECT user_id, name, email FROM USERS WHERE email = $1",
+      text: "SELECT user_id, name, email, role_id FROM USERS WHERE email = $1",
       values: [lowerEmail],
     };
     const result = await pool.query(query);
@@ -110,7 +114,10 @@ export const forgotPassword = async (
       return res
         .status(404)
         .json({ message: "No existe un usuario registrado con este correo." });
-    const token = generateToken({ id: user.user_id, email: user.email }, "1d");
+    const token = generateToken(
+      { id: user.user_id, email: user.email, role: user.role_id },
+      "1d"
+    );
     const update = {
       text: "UPDATE USERS SET forgot_password_token = $1 WHERE email = $2",
       values: [token, lowerEmail],
