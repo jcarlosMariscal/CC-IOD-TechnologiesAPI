@@ -39,9 +39,10 @@ export const handleDatabaseError = (error: any): ErrorResponse => {
     } else if (error.constraint.includes("status")) {
       message = "El estado seleccionado no existe.";
     } else if (error.constraint.includes("client_id")) {
-      message = "El cliente con el id proporcionado no existe.";
+      message = "No es posible eliminar a un cliente que es portador";
     } else if (error.constraint.includes("carrier_id")) {
-      message = "No es posible eliminar a un portador que es un cliente.";
+      message =
+        "No es posible eliminar a un portador que sin eliminar su operación.";
     } else if (error.constraint.includes("prospect_id")) {
       message = "No es posible eliminar a un prospecto que es un cliente.";
     }
