@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
-import { generateFilename, removeFile } from "../helpers/helpers";
+import { azureDeleteBlob, azureUploadBlob } from "../services/azure.service";
+import { getBlobName } from "../helpers/helpers";
 
 export const getAllClients = async (
   req: Request,
@@ -166,7 +167,7 @@ export const deleteClient = async (
   const clientId = parseInt(req.params.id);
   try {
     const query = {
-      text: "DELETE FROM CLIENTS WHERE client_id = $1",
+      text: "DELETE FROM CLIENTS WHERE client_id = $1 RETURNING contract",
       values: [clientId],
     };
     const result = await pool.query(query);
@@ -174,6 +175,16 @@ export const deleteClient = async (
       return res
         .status(404)
         .json({ message: "El cliente que desea eliminar no se encuentra." });
+    const contract = getBlobName(result.rows[0].contract as string);
+    const { message, success } = await azureDeleteBlob({
+      blobname: contract,
+      containerName: "contracts",
+    });
+    if (!success)
+      return res.status(500).json({
+        success: false,
+        message: message,
+      });
     return res.status(201).json({
       success: true,
       message: `El cliente ${clientId} ha sido eliminado`,
@@ -214,32 +225,23 @@ export const uploadContract = async (
 ): Promise<Response | void> => {
   const client_id = parseInt(req.params.id);
   try {
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    console.log(files);
-
-    if (!files.contract) {
+    if (!req.file) {
       return res.status(400).json({
         success: false,
         message: "Parece que no hay ningún cambio que hacer.",
       });
     }
-    const client = await pool.query(
-      "SELECT contract FROM CLIENTS WHERE client_id = $1",
-      [client_id]
-    );
-    if (files.contract && client.rows[0].contract) {
-      const remove = removeFile(client.rows[0].contract);
-      if (!remove) {
-        return res.status(400).json({
-          success: false,
-          message: "No se pudo eliminar el contrato anterior.",
-        });
-      }
-    }
-    const contract = files.contract
-      ? generateFilename(req, files.contract[0].filename)
-      : client.rows[0].contract;
-
+    const file = req.file;
+    const { message, success } = await azureUploadBlob({
+      blob: file,
+      containerName: "contracts",
+    });
+    if (!success)
+      return res.status(500).json({
+        success: false,
+        message: message,
+      });
+    const contract = message;
     const query = {
       text: "UPDATE CLIENTS SET contract = $1 WHERE client_id = $2 RETURNING contract",
       values: [contract, client_id],
@@ -261,19 +263,17 @@ export const deleteContract = async (
   next: NextFunction
 ): Promise<Response | void> => {
   const client_id = parseInt(req.params.id);
+  const { filename } = req.body;
   try {
-    const client = await pool.query(
-      "SELECT contract FROM CLIENTS WHERE client_id = $1",
-      [client_id]
-    );
-    const contractBD = client.rows[0].contract;
-    const remove = removeFile(contractBD);
-    if (!remove) {
-      return res.status(400).json({
+    const { message, success } = await azureDeleteBlob({
+      blobname: filename,
+      containerName: "contracts",
+    });
+    if (!success)
+      return res.status(500).json({
         success: false,
-        message: "Ha ocurrido un error al intentar eliminar el contrato.",
+        message: message,
       });
-    }
 
     const query = {
       text: "UPDATE CLIENTS SET contract = $1 WHERE client_id = $2",

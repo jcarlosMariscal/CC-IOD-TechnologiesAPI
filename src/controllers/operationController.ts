@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { pool } from "../database/connection";
-import { removeFile } from "../helpers/helpers";
 
-// import AzureStorageBlob from "@azure/storage-blob";
-import { BlobServiceClient } from "@azure/storage-blob";
+import { azureDeleteBlob, azureUploadBlob } from "../services/azure.service";
+import { getBlobName } from "../helpers/helpers";
 
 export const getAllOperations = async (
   req: Request,
@@ -43,57 +42,29 @@ export const updateOperation = async (
     }
     const file = req.file;
 
-    console.log(file);
-
-    const AZURE_STORAGE_KEY = process.env.AZURE_STORAGE_CONNECTION_STRING;
-
-    if (!AZURE_STORAGE_KEY) {
-      return res.status(400).json({
+    const { message, success } = await azureUploadBlob({
+      blob: file,
+      containerName: "reports",
+    });
+    if (!success)
+      return res.status(500).json({
         success: false,
-        message: "Error en la llave de autorización",
+        message: message,
       });
-    }
-
-    const containerName = "documents";
-    const blobServiceClient =
-      BlobServiceClient.fromConnectionString(AZURE_STORAGE_KEY);
-    const containerClient = blobServiceClient.getContainerClient(containerName);
-
-    const blobName = file.originalname;
-
-    // Get a block blob client
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-
-    // Upload data to the blob
-    // const data = "Hello, World!";
-    await blockBlobClient.upload(file.buffer, file.size);
-
+    const report = message;
     const query = {
       text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2 RETURNING installation_report",
-      values: [blockBlobClient.url, operation_id],
+      values: [report, operation_id],
     };
-    const result = await pool.query(query);
+    await pool.query(query);
     return res.status(201).json({
       success: true,
       message: "La operación se ha modificado correctamente",
-      data: { installation_report: result.rows[0].installation_report },
+      data: { installation_report: report },
     });
   } catch (error: any) {
     next(error);
   }
-};
-const removeFileOperation = async (carrier_id: number): Promise<boolean> => {
-  const operation = await pool.query(
-    "SELECT installation_report FROM OPERATIONS WHERE carrier_id = $1",
-    [carrier_id]
-  );
-  const reportBD = operation.rowCount
-    ? operation.rows[0].installation_report
-    : null;
-  if (!reportBD) return true;
-  const remove = removeFile(reportBD);
-  if (!remove) return false;
-  return true;
 };
 export const deleteOperation = async (
   req: Request,
@@ -102,15 +73,8 @@ export const deleteOperation = async (
 ): Promise<Response | void> => {
   const carrier_id = parseInt(req.params.id);
   try {
-    const remove = removeFileOperation(carrier_id);
-    if (!remove)
-      return res.status(400).json({
-        success: false,
-        message:
-          "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
-      });
     const query = {
-      text: "DELETE FROM OPERATIONS WHERE carrier_id = $1",
+      text: "DELETE FROM OPERATIONS WHERE carrier_id = $1 RETURNING installation_report",
       values: [carrier_id],
     };
     const result = await pool.query(query);
@@ -118,6 +82,16 @@ export const deleteOperation = async (
       return res
         .status(404)
         .json({ message: "La operación que desea eliminar no se encuentra." });
+    const report = getBlobName(result.rows[0].installation_report as string);
+    const { message, success } = await azureDeleteBlob({
+      blobname: report,
+      containerName: "reports",
+    });
+    if (!success)
+      return res.status(500).json({
+        success: false,
+        message: message,
+      });
     return res.status(201).json({
       success: true,
       message: `La operación ha sido eliminado`,
@@ -132,13 +106,16 @@ export const deleteFile = async (
   next: NextFunction
 ): Promise<Response | void> => {
   const operation_id = parseInt(req.params.id);
+  const { filename } = req.body;
   try {
-    const remove = removeFileOperation(operation_id);
-    if (!remove)
-      return res.status(400).json({
+    const { message, success } = await azureDeleteBlob({
+      blobname: filename,
+      containerName: "reports",
+    });
+    if (!success)
+      return res.status(500).json({
         success: false,
-        message:
-          "Ha ocurrido un error al intentar eliminar el reporte de instalación.",
+        message: message,
       });
     const query = {
       text: "UPDATE OPERATIONS SET installation_report = $1 WHERE operation_id = $2",
