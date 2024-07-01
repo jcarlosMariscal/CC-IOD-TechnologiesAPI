@@ -23,7 +23,7 @@ export const azureUploadBlob = async ({
   containerName,
 }: IAzureUpload): Promise<TResponse> => {
   try {
-    const blobName = blob!.originalname;
+    const blobName = blob!.originalname.replace(/ /g, "_");
     const blockBlobClient = getBlockBlobClient(containerName, blobName);
     const exists = await blockBlobClient.exists();
     if (exists) {

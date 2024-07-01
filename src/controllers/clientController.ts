@@ -175,16 +175,19 @@ export const deleteClient = async (
       return res
         .status(404)
         .json({ message: "El cliente que desea eliminar no se encuentra." });
-    const contract = getBlobName(result.rows[0].contract as string);
-    const { message, success } = await azureDeleteBlob({
-      blobname: contract,
-      containerName: "contracts",
-    });
-    if (!success)
-      return res.status(500).json({
-        success: false,
-        message: message,
+    const BDContract: string | null = result.rows[0].contract;
+    if (BDContract) {
+      const contract = getBlobName(BDContract);
+      const { message, success } = await azureDeleteBlob({
+        blobname: contract,
+        containerName: "contracts",
       });
+      if (!success)
+        return res.status(500).json({
+          success: false,
+          message: message,
+        });
+    }
     return res.status(201).json({
       success: true,
       message: `El cliente ${clientId} ha sido eliminado`,

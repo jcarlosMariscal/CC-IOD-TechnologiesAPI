@@ -12,11 +12,25 @@ import path from "path";
 const app = express();
 
 app.use(express.json());
+const isProduction = process.env.NODE_ENV === "production";
 
-app.use(cors());
-// app.use(cors({
-//   origin: 'https://cciod.mx/'
-// }));
+if (isProduction) {
+  const allowedOrigins = ["https://cciodtech.com", "https://dev.cciodtech.com"];
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      if (allowedOrigins.indexOf(origin!) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    optionsSuccessStatus: 200,
+  };
+
+  app.use(cors(corsOptions));
+} else {
+  app.use(cors());
+}
 
 const uploadsPath = path.resolve(__dirname, "../uploads");
 app.use("/uploads", express.static(uploadsPath));
