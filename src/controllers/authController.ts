@@ -116,7 +116,7 @@ export const forgotPassword = async (
         .json({ message: "No existe un usuario registrado con este correo." });
     const token = generateToken(
       { id: user.user_id, email: user.email, role: user.role_id },
-      "1d"
+      "4h"
     );
     const update = {
       text: "UPDATE USERS SET forgot_password_token = $1 WHERE email = $2",
