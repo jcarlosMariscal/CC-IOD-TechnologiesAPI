@@ -10,7 +10,7 @@ export const validationFiles = (
   if (err instanceof multer.MulterError) {
     let message =
       err.code === "LIMIT_FILE_SIZE"
-        ? "El archivo es muy grande. El tamaño máximo permitido es de 5MB."
+        ? "El archivo es muy grande. El tamaño máximo permitido es de 20MB."
         : err.code === "LIMIT_UNEXPECTED_FILE"
         ? "Para esta funcionalidad solo se admiten archivos PDF."
         : "Ha ocurrido un error al subir los archivos.";
